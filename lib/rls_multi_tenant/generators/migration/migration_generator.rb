@@ -30,8 +30,7 @@ module RlsMultiTenant
       private
 
       def create_app_user_migration
-        timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-        template "create_app_user.rb", "db/migrate/#{timestamp}_create_app_user.rb"
+        create_app_user_migrations_for_all_databases
       end
 
       def create_enable_rls_migration
@@ -47,6 +46,44 @@ module RlsMultiTenant
       def create_enable_uuid_migration
         timestamp = Time.current.strftime("%Y%m%d%H%M%S")
         template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
+      end
+
+      def create_app_user_migrations_for_all_databases
+        # Get database configuration for current environment
+        db_config = Rails.application.config.database_configuration[Rails.env]
+        
+        # Handle both single database and multiple databases configuration
+        databases_to_process = if db_config.is_a?(Hash) && db_config.key?('primary')
+          # Multiple databases configuration
+          db_config
+        else
+          # Single database configuration - treat as primary
+          { 'primary' => db_config }
+        end
+
+        databases_to_process.each do |db_name, config|
+          next if db_name == 'primary' # Skip primary database, handle it separately
+          
+          # Check if migrations_paths is defined for this database
+          if config['migrations_paths']
+            migration_paths = Array(config['migrations_paths'])
+            migration_paths.each do |migration_path|
+              migration_dir = File.join(destination_root, migration_path)
+              FileUtils.mkdir_p(migration_dir) unless File.directory?(migration_dir)
+              
+              timestamp = Time.current.strftime("%Y%m%d%H%M%S")
+              template "create_app_user.rb", "#{migration_path}/#{timestamp}_create_app_user.rb"
+              say "Created app user migration for #{db_name} in #{migration_path}", :green
+            end
+          else
+            say "No migrations_paths defined for database '#{db_name}', skipping app user migration", :yellow
+          end
+        end
+
+        # Handle primary database (default behavior)
+        timestamp = Time.current.strftime("%Y%m%d%H%M%S")
+        template "create_app_user.rb", "db/migrate/#{timestamp}_create_app_user.rb"
+        say "Created app user migration for primary database", :green
       end
 
       def table_name
