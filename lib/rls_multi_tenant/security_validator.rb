@@ -33,6 +33,7 @@ module RlsMultiTenant
 
       def validate_environment!
         return if skip_validation?
+        return unless RlsMultiTenant.enable_security_validation
         
         app_user = ENV[RlsMultiTenant.app_user_env_var]
         

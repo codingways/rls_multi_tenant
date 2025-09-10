@@ -12,8 +12,10 @@ module RlsMultiTenant
         # Enable RLS
         ActiveRecord::Base.connection.execute("ALTER TABLE #{table_name} ENABLE ROW LEVEL SECURITY")
         
-        # Create policy
+        # Create policy (drop if exists first)
         policy_name = "#{table_name}_app_user"
+        ActiveRecord::Base.connection.execute("DROP POLICY IF EXISTS #{policy_name} ON #{table_name}")
+        
         policy_sql = "CREATE POLICY #{policy_name} ON #{table_name} TO #{app_user} " \
                     "USING (#{tenant_column} = NULLIF(current_setting('rls.tenant_id', TRUE), '')::uuid)"
         

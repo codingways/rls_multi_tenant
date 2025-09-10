@@ -16,7 +16,9 @@ module RlsMultiTenant
 
         def set_tenant_id
           current_tenant = RlsMultiTenant.tenant_class.current
-          self.send("#{RlsMultiTenant.tenant_id_column}=", current_tenant&.id) if current_tenant
+          if current_tenant && self.send(RlsMultiTenant.tenant_id_column).blank?
+            self.send("#{RlsMultiTenant.tenant_id_column}=", current_tenant.id)
+          end
         end
       end
 

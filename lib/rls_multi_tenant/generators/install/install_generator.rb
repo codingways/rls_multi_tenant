@@ -14,7 +14,7 @@ module RlsMultiTenant
       end
 
       def create_tenant_model
-        unless File.exist?("app/models/tenant.rb")
+        unless File.exist?(File.join(destination_root, "app/models/tenant.rb"))
           template "tenant_model.rb", "app/models/tenant.rb"
         else
           say "Tenant model already exists, skipping creation", :yellow
@@ -22,7 +22,7 @@ module RlsMultiTenant
       end
 
       def create_db_admin_task
-        unless File.exist?("lib/tasks/db_admin.rake")
+        unless File.exist?(File.join(destination_root, "lib/tasks/db_admin.rake"))
           template "db_admin.rake", "lib/tasks/db_admin.rake"
         else
           say "Database admin task already exists, skipping creation", :yellow
@@ -30,7 +30,7 @@ module RlsMultiTenant
       end
 
       def create_uuid_migration
-        unless Dir.glob("db/migrate/*_enable_uuid_extension.rb").any?
+        unless Dir.glob(File.join(destination_root, "db/migrate/*_enable_uuid_extension.rb")).any?
           create_migration_with_timestamp("enable_uuid", 1)
         else
           say "UUID extension migration already exists, skipping creation", :yellow
@@ -38,7 +38,7 @@ module RlsMultiTenant
       end
 
       def create_app_user_migration
-        unless Dir.glob("db/migrate/*_create_app_user.rb").any?
+        unless Dir.glob(File.join(destination_root, "db/migrate/*_create_app_user.rb")).any?
           create_migration_with_timestamp("create_app_user", 2)
         else
           say "App user migration already exists, skipping creation", :yellow
@@ -46,7 +46,7 @@ module RlsMultiTenant
       end
 
       def create_tenant_migration
-        unless Dir.glob("db/migrate/*_create_tenant.rb").any?
+        unless Dir.glob(File.join(destination_root, "db/migrate/*_create_tenants.rb")).any?
           create_migration_with_timestamp("create_tenant", 3)
         else
           say "Tenant migration already exists, skipping creation", :yellow

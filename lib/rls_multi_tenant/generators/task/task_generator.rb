@@ -11,6 +11,7 @@ module RlsMultiTenant
 
       def create_db_admin_task
         template "db_admin.rake", "lib/tasks/db_admin.rake"
+        show_instructions
       end
 
       def show_instructions
@@ -22,7 +23,6 @@ module RlsMultiTenant
         say "\nUsage:", :yellow
         say "rails db_as:admin[migrate]    # Run migrations with admin privileges", :yellow
         say "rails db_as:admin[seed]       # Run seeds with admin privileges", :yellow
-        say "rails db_as:admin[rollback]   # Rollback with admin privileges", :yellow
         say "\nNote: This is required because the app user doesn't have migration privileges", :yellow
         say "="*60, :green
       end
