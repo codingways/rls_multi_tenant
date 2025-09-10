@@ -19,6 +19,10 @@ class CreateAppUser < ActiveRecord::Migration[<%= Rails.version.to_f %>]
     execute "GRANT USAGE ON SCHEMA public TO #{app_user};"
     execute "GRANT CREATE ON SCHEMA public TO #{app_user};"
 
+    # Grant default permissions for future tables in public schema
+    execute "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO #{app_user};"
+    execute "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO #{app_user};"
+
     # Grant permissions on system tables
     execute "GRANT SELECT ON TABLE schema_migrations TO #{app_user};"
     execute "GRANT SELECT ON TABLE ar_internal_metadata TO #{app_user};"
@@ -31,6 +35,10 @@ class CreateAppUser < ActiveRecord::Migration[<%= Rails.version.to_f %>]
     execute "REVOKE ALL ON SCHEMA public FROM #{app_user};"
     execute "REVOKE CONNECT ON DATABASE #{ActiveRecord::Base.connection.current_database} FROM #{app_user};"
     
+    # Revoke default permissions for future tables in public schema
+    execute "ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT, INSERT, UPDATE, DELETE ON TABLES FROM #{app_user};"
+    execute "ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE USAGE, SELECT ON SEQUENCES FROM #{app_user};"
+
     # Drop user
     execute "DROP ROLE IF EXISTS #{app_user};"
   end
