@@ -18,6 +18,10 @@ class CreateAppUser < ActiveRecord::Migration[<%= Rails.version.to_f %>]
     execute "GRANT CONNECT ON DATABASE #{ActiveRecord::Base.connection.current_database} TO #{app_user};"
     execute "GRANT USAGE ON SCHEMA public TO #{app_user};"
     execute "GRANT CREATE ON SCHEMA public TO #{app_user};"
+
+    # Grant permissions on system tables
+    execute "GRANT SELECT ON TABLE schema_migrations TO #{app_user};"
+    execute "GRANT SELECT ON TABLE ar_internal_metadata TO #{app_user};"
   end
 
   def down
