@@ -16,7 +16,7 @@ A Rails gem that provides PostgreSQL Row Level Security (RLS) based multi-tenanc
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'rls_multi_tenant', path: 'gems/rls_multi_tenant'
+gem 'rls_multi_tenant'
 ```
 
 And then execute:
