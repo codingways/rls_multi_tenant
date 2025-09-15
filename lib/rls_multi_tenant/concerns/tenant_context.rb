@@ -5,14 +5,17 @@ module RlsMultiTenant
     module TenantContext
       extend ActiveSupport::Concern
 
-      SET_TENANT_ID_SQL = 'SET rls.tenant_id = %s'.freeze
-      RESET_TENANT_ID_SQL = 'RESET rls.tenant_id'.freeze
+      SET_TENANT_ID_SQL = 'SET %s = %s'.freeze
+      RESET_TENANT_ID_SQL = 'RESET %s'.freeze
 
       class_methods do
+        def tenant_session_var
+          "rls.#{RlsMultiTenant.tenant_id_column}"
+        end
         # Switch tenant context for a block
         def switch(tenant_or_id)
           tenant_id = extract_tenant_id(tenant_or_id)
-          connection.execute format(SET_TENANT_ID_SQL, connection.quote(tenant_id))
+          connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(tenant_id))
           yield
         ensure
           reset!
@@ -21,20 +24,20 @@ module RlsMultiTenant
         # Switch tenant context permanently (until reset)
         def switch!(tenant_or_id)
           tenant_id = extract_tenant_id(tenant_or_id)
-          connection.execute format(SET_TENANT_ID_SQL, connection.quote(tenant_id))
+          connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(tenant_id))
         end
 
         # Reset tenant context
         def reset!
-          connection.execute RESET_TENANT_ID_SQL
+          connection.execute format(RESET_TENANT_ID_SQL, tenant_session_var)
         end
 
         # Get current tenant from context
         def current
           return nil unless connection.active?
 
-          result = connection.execute("SHOW rls.tenant_id")
-          tenant_id = result.first&.dig('rls.tenant_id')
+          result = connection.execute("SHOW #{tenant_session_var}")
+          tenant_id = result.first&.dig(tenant_session_var)
           
           return nil if tenant_id.blank?
           

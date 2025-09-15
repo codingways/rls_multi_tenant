@@ -16,8 +16,9 @@ module RlsMultiTenant
         policy_name = "#{table_name}_app_user"
         ActiveRecord::Base.connection.execute("DROP POLICY IF EXISTS #{policy_name} ON #{table_name}")
         
+        tenant_session_var = "rls.#{RlsMultiTenant.tenant_id_column}"
         policy_sql = "CREATE POLICY #{policy_name} ON #{table_name} TO #{app_user} " \
-                    "USING (#{tenant_column} = NULLIF(current_setting('rls.tenant_id', TRUE), '')::uuid)"
+                    "USING (#{tenant_column} = NULLIF(current_setting('#{tenant_session_var}', TRUE), '')::uuid)"
         
         ActiveRecord::Base.connection.execute(policy_sql)
         
