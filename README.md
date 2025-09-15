@@ -32,15 +32,31 @@ bundle install
    rails generate rls_multi_tenant:install
    ```
 
-2. **Configure environment variables:**
+2. **Configure the gem settings:**
+   Edit `config/initializers/rls_multi_tenant.rb` to customize your tenant model:
+   ```ruby
+   RlsMultiTenant.configure do |config|
+     config.tenant_class_name = "Tenant"           # Change to your preferred tenant model name
+     config.tenant_id_column = :tenant_id          # Tenant ID column name
+     config.app_user_env_var = "POSTGRES_APP_USER" # Environment variable for app user
+     config.enable_security_validation = true      # Enable security checks
+   end
+   ```
+
+3. **Configure environment variables:**
    ```bash
    POSTGRES_USER=your_admin_user # This is the user that will run the migrations
    POSTGRES_PASSWORD=your_admin_user_password
    POSTGRES_APP_USER=your_app_user # This is the user that will run the app
-   POSTGRES_APP_PASSWORD=your_password
+   POSTGRES_APP_PASSWORD=your_app_user_password
    ```
 
-3. **Run migrations:**
+4. **Setup the tenant model and migrations:**
+   ```bash
+   rails generate rls_multi_tenant:setup
+   ```
+
+5. **Run migrations:**
    ```bash
    rails db_as:admin[migrate] # Custom rake task to run migrations with admin privileges
    ```
@@ -87,16 +103,18 @@ current_tenant = Tenant.current
 
 ## Configuration
 
-Configure the gem in `config/initializers/rls_multi_tenant.rb`:
+The gem is configured in `config/initializers/rls_multi_tenant.rb` (created by the install generator). You can customize the following options:
 
 ```ruby
 RlsMultiTenant.configure do |config|
-  config.tenant_class_name = "Tenant"           # Your tenant model class
+  config.tenant_class_name = "Tenant"           # Your tenant model class (e.g., "Organization", "Company")
   config.tenant_id_column = :tenant_id          # Tenant ID column name
   config.app_user_env_var = "POSTGRES_APP_USER" # Environment variable for app user
-  config.enable_security_validation = true      # Enable security checks. This will check if the app user is set without superuser privileges.
+  config.enable_security_validation = true      # Enable security checks (prevents running with superuser privileges)
 end
 ```
+
+**Important**: Configure these settings **before** running `rails generate rls_multi_tenant:setup`, as the setup generator will use these values to create the appropriate model and migrations.
 
 ### Database Admin Task
 ```bash

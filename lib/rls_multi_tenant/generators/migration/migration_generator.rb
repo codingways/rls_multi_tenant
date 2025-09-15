@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require 'rails/generators'
+require 'rls_multi_tenant/generators/shared/template_helper'
 
 module RlsMultiTenant
   module Generators
     class MigrationGenerator < Rails::Generators::Base
+      include Shared::TemplateHelper
+      
       source_root File.expand_path("templates", __dir__)
 
       argument :migration_type, type: :string, desc: "Type of migration to generate"
@@ -40,12 +43,12 @@ module RlsMultiTenant
 
       def create_tenant_migration
         timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-        template "create_tenant.rb", "db/migrate/#{timestamp}_create_tenant.rb"
+        copy_shared_template "create_tenant.rb", "db/migrate/#{timestamp}_create_tenant.rb"
       end
 
       def create_enable_uuid_migration
         timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-        template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
+        copy_shared_template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
       end
 
       def create_app_user_migrations_for_all_databases
@@ -72,7 +75,7 @@ module RlsMultiTenant
               FileUtils.mkdir_p(migration_dir) unless File.directory?(migration_dir)
               
               timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-              template "create_app_user.rb", "#{migration_path}/#{timestamp}_create_app_user.rb"
+              copy_shared_template "create_app_user.rb", "#{migration_path}/#{timestamp}_create_app_user.rb"
               say "Created app user migration for #{db_name} in #{migration_path}", :green
             end
           else
@@ -82,7 +85,7 @@ module RlsMultiTenant
 
         # Handle primary database (default behavior)
         timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-        template "create_app_user.rb", "db/migrate/#{timestamp}_create_app_user.rb"
+        copy_shared_template "create_app_user.rb", "db/migrate/#{timestamp}_create_app_user.rb"
         say "Created app user migration for primary database", :green
       end
 

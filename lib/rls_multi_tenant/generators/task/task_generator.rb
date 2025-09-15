@@ -1,16 +1,19 @@
 # frozen_string_literal: true
 
 require 'rails/generators'
+require 'rls_multi_tenant/generators/shared/template_helper'
 
 module RlsMultiTenant
   module Generators
     class TaskGenerator < Rails::Generators::Base
+      include Shared::TemplateHelper
+      
       source_root File.expand_path("templates", __dir__)
 
       desc "Generate RLS Multi-tenant rake tasks"
 
       def create_db_admin_task
-        template "db_admin.rake", "lib/tasks/db_admin.rake"
+        copy_shared_template "db_admin.rake", "lib/tasks/db_admin.rake"
         show_instructions
       end
 

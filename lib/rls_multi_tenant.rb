@@ -5,9 +5,6 @@ require "rls_multi_tenant/concerns/multi_tenant"
 require "rls_multi_tenant/concerns/tenant_context"
 require "rls_multi_tenant/security_validator"
 require "rls_multi_tenant/rls_helper"
-# require "rls_multi_tenant/generators/install/install_generator" if defined?(Rails)
-# require "rls_multi_tenant/generators/migration/migration_generator" if defined?(Rails)
-# require "rls_multi_tenant/generators/model/model_generator" if defined?(Rails)
 require "rls_multi_tenant/railtie" if defined?(Rails)
 
 module RlsMultiTenant
