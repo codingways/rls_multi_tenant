@@ -17,7 +17,7 @@ module RlsMultiTenant
         tenant_file_path = "app/models/#{tenant_class_name.underscore}.rb"
         
         unless File.exist?(File.join(destination_root, tenant_file_path))
-          copy_shared_template "tenant_model.rb", tenant_file_path
+          template "tenant_model.rb", tenant_file_path
         else
           say "#{tenant_class_name} model already exists, skipping creation", :yellow
         end

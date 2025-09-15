@@ -138,9 +138,9 @@ The gem includes multiple security layers:
 
 ## Requirements
 
-- Rails 7.0+
-- PostgreSQL 12+ (with UUID extension support)
-- Ruby 3.0+
+- Rails 6.0+
+- PostgreSQL 9.5+ (with UUID extension support)
+- Ruby 2.7+
 
 ## UUID Support
 

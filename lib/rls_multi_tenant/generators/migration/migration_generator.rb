@@ -42,13 +42,24 @@ module RlsMultiTenant
       end
 
       def create_tenant_migration
-        timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-        copy_shared_template "create_tenant.rb", "db/migrate/#{timestamp}_create_tenant.rb"
+        tenant_class_name = RlsMultiTenant.tenant_class_name
+        migration_pattern = "*_create_#{tenant_class_name.underscore.pluralize}.rb"
+        
+        unless Dir.glob(File.join(destination_root, "db/migrate/#{migration_pattern}")).any?
+          timestamp = Time.current.strftime("%Y%m%d%H%M%S")
+          copy_shared_template "create_tenant.rb", "db/migrate/#{timestamp}_create_#{tenant_class_name.underscore.pluralize}.rb"
+        else
+          say "#{tenant_class_name} migration already exists, skipping creation", :yellow
+        end
       end
 
       def create_enable_uuid_migration
-        timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-        copy_shared_template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
+        unless Dir.glob(File.join(destination_root, "db/migrate/*_enable_uuid_extension.rb")).any?
+          timestamp = Time.current.strftime("%Y%m%d%H%M%S")
+          copy_shared_template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
+        else
+          say "UUID extension migration already exists, skipping creation", :yellow
+        end
       end
 
       def create_app_user_migrations_for_all_databases

@@ -5,6 +5,7 @@ require "rls_multi_tenant/concerns/multi_tenant"
 require "rls_multi_tenant/concerns/tenant_context"
 require "rls_multi_tenant/security_validator"
 require "rls_multi_tenant/rls_helper"
+require "rls_multi_tenant/generators/shared/template_helper"
 require "rls_multi_tenant/railtie" if defined?(Rails)
 
 module RlsMultiTenant

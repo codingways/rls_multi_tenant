@@ -5,6 +5,7 @@ module RlsMultiTenant
     # Load generators after Rails is fully initialized
     initializer "rls_multi_tenant.load_generators", after: :set_routes_reloader do |app|
       require "rls_multi_tenant/generators/install/install_generator"
+      require "rls_multi_tenant/generators/setup/setup_generator"
       require "rls_multi_tenant/generators/migration/migration_generator"
       require "rls_multi_tenant/generators/model/model_generator"
       require "rls_multi_tenant/generators/task/task_generator"

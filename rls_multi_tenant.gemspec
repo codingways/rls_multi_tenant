@@ -32,8 +32,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Dependencies
-  spec.add_dependency "rails", "~> 7.0"
-  spec.add_dependency "pg", "~> 1.0"
+  spec.add_dependency "rails", ">= 6.0", "< 9.0"
+  spec.add_dependency "pg", ">= 1.0", "< 3.0"
 
   # Development dependencies
   spec.add_development_dependency "rspec-rails", "~> 6.0"
