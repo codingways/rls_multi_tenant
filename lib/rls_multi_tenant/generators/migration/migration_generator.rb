@@ -47,7 +47,7 @@ module RlsMultiTenant
         
         unless Dir.glob(File.join(destination_root, "db/migrate/#{migration_pattern}")).any?
           timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-          copy_shared_template "create_tenant.rb", "db/migrate/#{timestamp}_create_#{tenant_class_name.underscore.pluralize}.rb"
+          render_shared_template "create_tenant.rb", "db/migrate/#{timestamp}_create_#{tenant_class_name.underscore.pluralize}.rb"
         else
           say "#{tenant_class_name} migration already exists, skipping creation", :yellow
         end
@@ -56,7 +56,7 @@ module RlsMultiTenant
       def create_enable_uuid_migration
         unless Dir.glob(File.join(destination_root, "db/migrate/*_enable_uuid_extension.rb")).any?
           timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-          copy_shared_template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
+          render_shared_template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
         else
           say "UUID extension migration already exists, skipping creation", :yellow
         end
@@ -86,7 +86,7 @@ module RlsMultiTenant
               FileUtils.mkdir_p(migration_dir) unless File.directory?(migration_dir)
               
               timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-              copy_shared_template "create_app_user.rb", "#{migration_path}/#{timestamp}_create_app_user.rb"
+              render_shared_template "create_app_user.rb", "#{migration_path}/#{timestamp}_create_app_user.rb"
               say "Created app user migration for #{db_name} in #{migration_path}", :green
             end
           else
@@ -96,7 +96,7 @@ module RlsMultiTenant
 
         # Handle primary database (default behavior)
         timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-        copy_shared_template "create_app_user.rb", "db/migrate/#{timestamp}_create_app_user.rb"
+        render_shared_template "create_app_user.rb", "db/migrate/#{timestamp}_create_app_user.rb"
         say "Created app user migration for primary database", :green
       end
 

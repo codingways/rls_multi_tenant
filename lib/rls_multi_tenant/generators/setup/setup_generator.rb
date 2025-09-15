@@ -126,12 +126,12 @@ module RlsMultiTenant
         
         case migration_type
         when "enable_uuid"
-          copy_shared_template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
+          render_shared_template "enable_uuid_extension.rb", "db/migrate/#{timestamp}_enable_uuid_extension.rb"
         when "create_app_user"
-          copy_shared_template "create_app_user.rb", "db/migrate/#{timestamp}_create_app_user.rb"
+          render_shared_template "create_app_user.rb", "db/migrate/#{timestamp}_create_app_user.rb"
         when "create_tenant"
           tenant_class_name = RlsMultiTenant.tenant_class_name
-          copy_shared_template "create_tenant.rb", "db/migrate/#{timestamp}_create_#{tenant_class_name.underscore.pluralize}.rb"
+          render_shared_template "create_tenant.rb", "db/migrate/#{timestamp}_create_#{tenant_class_name.underscore.pluralize}.rb"
         end
       end
 
@@ -141,7 +141,7 @@ module RlsMultiTenant
         
         case migration_type
         when "create_app_user"
-          copy_shared_template "create_app_user.rb", "#{migration_path}/#{timestamp}_create_app_user.rb"
+          render_shared_template "create_app_user.rb", "#{migration_path}/#{timestamp}_create_app_user.rb"
         end
       end
     end
