@@ -13,15 +13,6 @@ class <%= migration_class_name %> < ActiveRecord::Migration[<%= Rails.version.to
     # Enable Row Level Security
     execute "ALTER TABLE <%= table_name %> ENABLE ROW LEVEL SECURITY"
 
-    reversible do |dir|
-      dir.up do
-        execute "GRANT SELECT, INSERT, UPDATE, DELETE ON <%= table_name %> TO #{ENV['<%= RlsMultiTenant.app_user_env_var %>']}"
-      end
-      dir.down do
-        execute "REVOKE SELECT, INSERT, UPDATE, DELETE ON <%= table_name %> FROM #{ENV['<%= RlsMultiTenant.app_user_env_var %>']}"
-      end
-    end
-
     # Define RLS policy
     reversible do |dir|
       dir.up do

@@ -23,14 +23,6 @@ module RlsMultiTenant
         end
       end
 
-      def create_db_admin_task
-        unless File.exist?(File.join(destination_root, "lib/tasks/db_admin.rake"))
-          copy_shared_template "db_admin.rake", "lib/tasks/db_admin.rake"
-        else
-          say "Database admin task already exists, skipping creation", :yellow
-        end
-      end
-
       def create_uuid_migration
         unless Dir.glob(File.join(destination_root, "db/migrate/*_enable_uuid_extension.rb")).any?
           create_migration_with_timestamp("enable_uuid", 1)
@@ -61,7 +53,6 @@ module RlsMultiTenant
         say "="*60, :green
         say "\nCreated:", :yellow
         say "• #{tenant_class_name} model", :green
-        say "• Database admin task", :green
         say "• UUID extension migration", :green
         say "• App user migration(s)", :green
         say "• #{tenant_class_name} migration", :green

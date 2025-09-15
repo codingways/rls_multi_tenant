@@ -7,15 +7,9 @@ class EnableRlsFor<%= table_name.camelize %> < ActiveRecord::Migration[<%= Rails
         
         # Create RLS policy
         execute "CREATE POLICY <%= table_name %>_app_user ON <%= table_name %> TO #{ENV['<%= RlsMultiTenant.app_user_env_var %>']} USING (<%= RlsMultiTenant.tenant_id_column %> = NULLIF(current_setting('rls.<%= RlsMultiTenant.tenant_id_column %>', TRUE), '')::uuid)"
-        
-        # Grant permissions
-        execute "GRANT SELECT, INSERT, UPDATE, DELETE ON <%= table_name %> TO #{ENV['<%= RlsMultiTenant.app_user_env_var %>']}"
       end
       
       dir.down do
-        # Revoke permissions
-        execute "REVOKE SELECT, INSERT, UPDATE, DELETE ON <%= table_name %> FROM #{ENV['<%= RlsMultiTenant.app_user_env_var %>']}"
-        
         # Drop policy
         execute "DROP POLICY <%= table_name %>_app_user ON <%= table_name %>"
         

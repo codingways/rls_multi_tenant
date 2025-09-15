@@ -1,16 +1,27 @@
 # frozen_string_literal: true
 
 require 'rails/generators'
+require 'rls_multi_tenant/generators/shared/template_helper'
 
 module RlsMultiTenant
   module Generators
     class InstallGenerator < Rails::Generators::Base
+      include Shared::TemplateHelper
+
       source_root File.expand_path("templates", __dir__)
 
       desc "Install RLS Multi-tenant gem configuration"
 
       def create_initializer
         template "rls_multi_tenant.rb", "config/initializers/rls_multi_tenant.rb"
+      end
+
+      def create_db_admin_task
+        unless File.exist?(File.join(destination_root, "lib/tasks/db_admin.rake"))
+          copy_shared_template "db_admin.rake", "lib/tasks/db_admin.rake"
+        else
+          say "Database admin task already exists, skipping creation", :yellow
+        end
       end
 
       def show_instructions
