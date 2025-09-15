@@ -17,6 +17,8 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/codingways/rls_multi_tenant"
   spec.metadata["changelog_uri"] = "https://github.com/codingways/rls_multi_tenant/blob/main/CHANGELOG.md"
+  spec.metadata["bug_tracker_uri"] = "https://github.com/codingways/rls_multi_tenant/issues"
+  spec.metadata["documentation_uri"] = "https://github.com/codingways/rls_multi_tenant#readme"
 
   # Specify which files should be added to the gem when it is released.
   spec.files = Dir.chdir(__dir__) do
@@ -30,8 +32,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Dependencies
-  spec.add_dependency "rails", ">= 7.0"
-  spec.add_dependency "pg", ">= 1.0"
+  spec.add_dependency "rails", "~> 7.0"
+  spec.add_dependency "pg", "~> 1.0"
 
   # Development dependencies
   spec.add_development_dependency "rspec-rails", "~> 6.0"
