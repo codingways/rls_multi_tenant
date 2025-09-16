@@ -2,10 +2,12 @@ class Create<%= RlsMultiTenant.tenant_class_name.pluralize %> < ActiveRecord::Mi
   def change
     create_table :<%= RlsMultiTenant.tenant_class_name.underscore.pluralize %>, id: :uuid do |t|
       t.string :name, null: false
+      t.string :subdomain, null: false
 
       t.timestamps
     end
 
     add_index :<%= RlsMultiTenant.tenant_class_name.underscore.pluralize %>, :name, unique: true
+    add_index :<%= RlsMultiTenant.tenant_class_name.underscore.pluralize %>, :subdomain, unique: true
   end
 end

@@ -10,6 +10,7 @@ A Rails gem that provides PostgreSQL Row Level Security (RLS) based multi-tenanc
 - 📦 **Auto-inclusion**: Automatic model configuration
 - 🚀 **Generators**: Rails generators for quick setup
 - ⚙️ **Configurable**: Flexible configuration options
+- 🌐 **Subdomain Middleware**: Automatic tenant switching based on subdomain
 
 ## Installation
 
@@ -40,6 +41,8 @@ bundle install
      config.tenant_id_column = :tenant_id          # Tenant ID column name
      config.app_user_env_var = "POSTGRES_APP_USER" # Environment variable for app user
      config.enable_security_validation = true      # Enable security checks
+     config.enable_subdomain_middleware = true     # Enable subdomain-based tenant switching (default: true)
+     config.subdomain_field = :subdomain           # Field to use for subdomain matching (default: :subdomain)
    end
    ```
 
@@ -75,31 +78,77 @@ Your models automatically include the `MultiTenant` concern:
 ```ruby
 class User < ApplicationRecord
   # Automatically includes MultiTenant concern
-  # include RlsMultiTenant::Concerns::MultiTenant
+  include RlsMultiTenant::Concerns::MultiTenant
 end
 ```
 
 ### Tenant Context Switching
 
 ```ruby
-# Create a new tenant
-tenant = Tenant.create!(name: "Tenant 1")
+# Create a new tenant with subdomain
+tenant = Tenant.create!(name: "Company A", subdomain: "company-a")
 ```
 
 ```ruby
 # Switch tenant context for a block
 Tenant.switch(tenant) do
-  User.create!(name: "User from Tenant 1", email: "user@example.com") # Automatically assigned to current tenant
+  User.create!(name: "User from Company A", email: "user@company-a.com") # Automatically assigned to current tenant
 end
 
 # Switch tenant context permanently
 Tenant.switch!(tenant)
-User.create!(name: "User from Tenant 1", email: "user@example.com")
+User.create!(name: "User from Company A", email: "user@company-a.com")
 Tenant.reset! # Reset context
 
 # Get current tenant
 current_tenant = Tenant.current
 ```
+
+### Automatic Subdomain-Based Tenant Switching
+
+The gem includes middleware that automatically switches tenants based on the request subdomain. This is enabled by default and works seamlessly with your tenant model.
+
+**The middleware automatically:**
+- Extracts the subdomain from the request host
+- Finds the matching tenant by the subdomain field
+- Switches the tenant context for the duration of the request
+- Resets the context after the request completes
+
+**Usage:**
+```ruby
+# Create tenants with subdomains
+tenant1 = Tenant.create!(name: "Company A", subdomain: "company-a")
+tenant2 = Tenant.create!(name: "Company B", subdomain: "company-b")
+
+# Users visiting company-a.yourdomain.com will automatically be in tenant1's context
+# Users visiting company-b.yourdomain.com will automatically be in tenant2's context
+# Users visiting yourdomain.com (no subdomain) will have no tenant context
+```
+
+### Public Access (Non-Tenanted Models)
+
+Models that don't include `RlsMultiTenant::Concerns::TenantContext` are automatically treated as public models and can be accessed without tenant context. This provides a secure, explicit way to separate tenant-specific and public models.
+
+**Example:**
+```ruby
+# Public models (no tenant association)
+class PublicPost < ApplicationRecord
+  # No TenantContext concern included
+  # These models are accessible without tenant context
+end
+
+# Tenant-specific models (automatically generated)
+class User < ApplicationRecord
+  # Automatically includes MultiTenant concern
+  # These models require tenant context and are constrained by RLS
+  include RlsMultiTenant::Concerns::MultiTenant
+end
+```
+
+**Security Benefits:**
+- **Explicit Intent**: Models must explicitly include `TenantContext` to be tenant-constrained
+- **Fail-Safe**: Public models are clearly separated from tenant models
+- **No Configuration Drift**: Can't accidentally expose tenant data through misconfiguration
 
 ## Configuration
 
@@ -111,6 +160,8 @@ RlsMultiTenant.configure do |config|
   config.tenant_id_column = :tenant_id          # Tenant ID column name
   config.app_user_env_var = "POSTGRES_APP_USER" # Environment variable for app user
   config.enable_security_validation = true      # Enable security checks (prevents running with superuser privileges)
+  config.enable_subdomain_middleware = true     # Enable subdomain-based tenant switching (default: true)
+  config.subdomain_field = :subdomain           # Field to use for subdomain matching (default: :subdomain)
 end
 ```
 
@@ -126,6 +177,9 @@ rails db_as:admin[seed]
 
 # Create database with admin privileges
 rails db_as:admin[create]
+
+# Drop database with admin privileges
+rails db_as:admin[drop]
 ```
 
 ## Security Features

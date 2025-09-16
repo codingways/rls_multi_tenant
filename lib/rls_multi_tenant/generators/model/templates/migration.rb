@@ -1,7 +1,7 @@
 class <%= migration_class_name %> < ActiveRecord::Migration[<%= Rails.version.to_f %>]
   def change
     # Create the table
-    create_table :<%= table_name %>, id: :uuid do |t|
+    create_table :<%= table_name %> do |t|
       t.references :<%= tenant_id_column.to_s.gsub('_id', '') %>, null: false, foreign_key: { to_table: :<%= tenant_class_name.underscore.pluralize %> }, type: :uuid
 <% @attributes.each do |attribute| -%>
       t.<%= attribute.type %> :<%= attribute.name %>

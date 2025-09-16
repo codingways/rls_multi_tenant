@@ -12,6 +12,7 @@ module RlsMultiTenant
         def tenant_session_var
           "rls.#{RlsMultiTenant.tenant_id_column}"
         end
+
         # Switch tenant context for a block
         def switch(tenant_or_id)
           tenant_id = extract_tenant_id(tenant_or_id)

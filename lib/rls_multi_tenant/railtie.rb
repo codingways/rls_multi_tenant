@@ -34,5 +34,11 @@ module RlsMultiTenant
         end
       end
     end
+
+    initializer "rls_multi_tenant.middleware", after: :load_config_initializers do |app|
+      if RlsMultiTenant.enable_subdomain_middleware
+        app.config.middleware.use RlsMultiTenant::Middleware::SubdomainTenantSelector
+      end
+    end
   end
 end

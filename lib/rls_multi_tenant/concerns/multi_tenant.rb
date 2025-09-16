@@ -16,8 +16,13 @@ module RlsMultiTenant
 
         def set_tenant_id
           current_tenant = RlsMultiTenant.tenant_class.current
+
           if current_tenant && self.send(RlsMultiTenant.tenant_id_column).blank?
             self.send("#{RlsMultiTenant.tenant_id_column}=", current_tenant.id)
+          elsif current_tenant.nil?
+            raise RlsMultiTenant::Error, 
+                  "Cannot create #{self.class.name} without tenant context. " \
+                  "This model requires a tenant context. "
           end
         end
       end

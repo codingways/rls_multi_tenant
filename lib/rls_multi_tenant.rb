@@ -5,6 +5,7 @@ require "rls_multi_tenant/concerns/multi_tenant"
 require "rls_multi_tenant/concerns/tenant_context"
 require "rls_multi_tenant/security_validator"
 require "rls_multi_tenant/rls_helper"
+require "rls_multi_tenant/middleware/subdomain_tenant_selector"
 require "rls_multi_tenant/generators/shared/template_helper"
 require "rls_multi_tenant/railtie" if defined?(Rails)
 
@@ -15,7 +16,7 @@ module RlsMultiTenant
 
   # Configuration options
   class << self
-    attr_accessor :tenant_class_name, :tenant_id_column, :app_user_env_var, :enable_security_validation
+    attr_accessor :tenant_class_name, :tenant_id_column, :app_user_env_var, :enable_security_validation, :enable_subdomain_middleware, :subdomain_field
 
     def configure
       yield self
@@ -36,6 +37,14 @@ module RlsMultiTenant
     def enable_security_validation
       @enable_security_validation.nil? ? true : @enable_security_validation
     end
+
+    def enable_subdomain_middleware
+      @enable_subdomain_middleware.nil? ? false : @enable_subdomain_middleware
+    end
+
+    def subdomain_field
+      @subdomain_field ||= :subdomain
+    end
   end
 
   # Default configuration
@@ -43,4 +52,6 @@ module RlsMultiTenant
   self.tenant_id_column = :tenant_id
   self.app_user_env_var = "POSTGRES_APP_USER"
   self.enable_security_validation = true
+  self.enable_subdomain_middleware = true
+  self.subdomain_field = :subdomain
 end
