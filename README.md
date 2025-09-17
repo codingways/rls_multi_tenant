@@ -1,5 +1,12 @@
 # RLS Multi-Tenant
 
+[![CI](https://github.com/codingways/rls_multi_tenant/actions/workflows/simple.yml/badge.svg)](https://github.com/codingways/rls_multi_tenant/actions/workflows/simple.yml)
+[![Ruby](https://img.shields.io/badge/ruby-3.0%2B-red.svg)](https://www.ruby-lang.org/)
+[![Rails](https://img.shields.io/badge/rails-6.0%2B-red.svg)](https://rubyonrails.org/)
+[![Gem Version](https://badge.fury.io/rb/rls_multi_tenant.svg)](https://badge.fury.io/rb/rls_multi_tenant)
+[![Downloads](https://img.shields.io/gem/dt/rls_multi_tenant.svg)](https://rubygems.org/gems/rls_multi_tenant)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A Rails gem that provides PostgreSQL Row Level Security (RLS) based multi-tenancy for Rails applications.
 
 ## Features
