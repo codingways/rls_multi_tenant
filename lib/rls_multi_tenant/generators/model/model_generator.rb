@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails/generators'
-require 'ostruct'
 
 module RlsMultiTenant
   module Generators
@@ -73,7 +72,7 @@ module RlsMultiTenant
       def parse_attributes!
         attributes.map do |attr|
           name, type = attr.split(':')
-          OpenStruct.new(name: name, type: type || 'string')
+          { name: name, type: type || 'string' }
         end
       end
     end

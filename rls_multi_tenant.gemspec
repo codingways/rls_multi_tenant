@@ -34,7 +34,6 @@ Gem::Specification.new do |spec|
   # Dependencies
   spec.add_dependency "rails", ">= 6.0", "< 9.0"
   spec.add_dependency "pg", ">= 1.0", "< 3.0"
-  spec.add_dependency "ostruct", ">= 0.1.0"
 
   # Development dependencies
   spec.add_development_dependency "rspec-rails", "~> 6.0"

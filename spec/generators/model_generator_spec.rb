@@ -48,7 +48,7 @@ RSpec.describe 'Model Generator Tests' do
     it 'migration template includes specified attributes' do
       template_content = File.read(migration_template_path)
       expect(template_content).to include('<% @attributes.each do |attribute| -%>')
-      expect(template_content).to include('t.<%= attribute.type %> :<%= attribute.name %>')
+      expect(template_content).to include('t.<%= attribute[:type] %> :<%= attribute[:name] %>')
     end
   end
 
