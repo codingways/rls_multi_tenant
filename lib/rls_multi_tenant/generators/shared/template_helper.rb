@@ -9,7 +9,7 @@ module RlsMultiTenant
         private
 
         def shared_template_path
-          File.expand_path("templates", File.dirname(__FILE__))
+          File.expand_path('templates', File.dirname(__FILE__))
         end
 
         def copy_shared_template(template_name, destination_path)

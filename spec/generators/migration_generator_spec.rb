@@ -4,8 +4,10 @@ require 'rails_helper'
 
 RSpec.describe 'Migration Generator Tests' do
   describe 'RLS migration template content' do
-    let(:template_path) { File.join(__dir__, '../../lib/rls_multi_tenant/generators/migration/templates/enable_rls.rb') }
-    
+    let(:template_path) do
+      File.join(__dir__, '../../lib/rls_multi_tenant/generators/migration/templates/enable_rls.rb')
+    end
+
     it 'template file exists' do
       expect(File.exist?(template_path)).to be true
     end
@@ -23,11 +25,6 @@ RSpec.describe 'Migration Generator Tests' do
     it 'contains tenant_id column reference' do
       template_content = File.read(template_path)
       expect(template_content).to include('<%= RlsMultiTenant.tenant_id_column %>')
-    end
-
-    it 'contains environment variable reference' do
-      template_content = File.read(template_path)
-      expect(template_content).to include('ENV[\'<%= RlsMultiTenant.app_user_env_var %>\']')
     end
 
     it 'contains rollback functionality' do
@@ -56,8 +53,10 @@ RSpec.describe 'Migration Generator Tests' do
   end
 
   describe 'Template helper methods' do
-    let(:template_path) { File.join(__dir__, '../../lib/rls_multi_tenant/generators/migration/templates/enable_rls.rb') }
-    
+    let(:template_path) do
+      File.join(__dir__, '../../lib/rls_multi_tenant/generators/migration/templates/enable_rls.rb')
+    end
+
     it 'template uses proper ERB syntax' do
       template_content = File.read(template_path)
       # Check for proper ERB syntax

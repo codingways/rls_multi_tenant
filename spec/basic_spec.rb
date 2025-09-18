@@ -7,16 +7,17 @@ RSpec.describe 'RLS Multi-Tenant Basic Tests' do
     it 'has correct default configuration' do
       expect(RlsMultiTenant.tenant_class_name).to eq('Tenant')
       expect(RlsMultiTenant.tenant_id_column).to eq(:tenant_id)
-      expect(RlsMultiTenant.app_user_env_var).to eq('POSTGRES_APP_USER')
       expect(RlsMultiTenant.enable_security_validation).to be true
+      expect(RlsMultiTenant.enable_subdomain_middleware).to be true
+      expect(RlsMultiTenant.subdomain_field).to eq(:subdomain)
     end
 
     it 'allows configuration changes' do
       original_name = RlsMultiTenant.tenant_class_name
-      
+
       RlsMultiTenant.tenant_class_name = 'Organization'
       expect(RlsMultiTenant.tenant_class_name).to eq('Organization')
-      
+
       # Reset
       RlsMultiTenant.tenant_class_name = original_name
     end
@@ -49,10 +50,6 @@ RSpec.describe 'RLS Multi-Tenant Basic Tests' do
   describe 'Security Validator' do
     it 'has validate_database_user! method' do
       expect(RlsMultiTenant::SecurityValidator).to respond_to(:validate_database_user!)
-    end
-
-    it 'has validate_environment! method' do
-      expect(RlsMultiTenant::SecurityValidator).to respond_to(:validate_environment!)
     end
   end
 

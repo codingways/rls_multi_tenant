@@ -6,7 +6,7 @@ require 'generator_spec'
 # Mock Rails for testing
 module Rails
   def self.root
-    Pathname.new(File.expand_path('../..', __FILE__))
+    Pathname.new(File.expand_path('..', __dir__))
   end
 
   def self.logger
@@ -36,7 +36,7 @@ module ActiveRecord
     end
 
     def self.connection_db_config
-      @db_config ||= double('db_config', configuration_hash: { username: 'test_user' })
+      @connection_db_config ||= double('db_config', configuration_hash: { username: 'test_user' })
     end
 
     def self.execute(sql)
@@ -45,7 +45,7 @@ module ActiveRecord
   end
 
   class Migration
-    def self.[](version)
+    def self.[](_version)
       self
     end
   end
@@ -85,9 +85,9 @@ require_relative '../lib/rls_multi_tenant'
 RSpec.configure do |config|
   # Include generator spec helpers
   config.include GeneratorSpec::TestCase, type: :generator
-  
+
   # Mock Rails components
-  config.before(:each) do
+  config.before do
     allow(Rails.logger).to receive(:info)
     allow(Rails.logger).to receive(:warn)
     allow(Rails.logger).to receive(:error)

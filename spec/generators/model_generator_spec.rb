@@ -5,8 +5,10 @@ require 'rails_helper'
 RSpec.describe 'Model Generator Tests' do
   describe 'Model template content' do
     let(:model_template_path) { File.join(__dir__, '../../lib/rls_multi_tenant/generators/model/templates/model.rb') }
-    let(:migration_template_path) { File.join(__dir__, '../../lib/rls_multi_tenant/generators/model/templates/migration.rb') }
-    
+    let(:migration_template_path) do
+      File.join(__dir__, '../../lib/rls_multi_tenant/generators/model/templates/migration.rb')
+    end
+
     it 'model template file exists' do
       expect(File.exist?(model_template_path)).to be true
     end

@@ -5,8 +5,8 @@ module RlsMultiTenant
     module TenantContext
       extend ActiveSupport::Concern
 
-      SET_TENANT_ID_SQL = 'SET %s = %s'.freeze
-      RESET_TENANT_ID_SQL = 'RESET %s'.freeze
+      SET_TENANT_ID_SQL = 'SET %s = %s'
+      RESET_TENANT_ID_SQL = 'RESET %s'
 
       class_methods do
         def tenant_session_var
@@ -41,9 +41,9 @@ module RlsMultiTenant
 
           result = connection.execute("SHOW #{tenant_session_var}")
           tenant_id = result.first&.dig(tenant_session_var)
-          
+
           return nil if tenant_id.blank?
-          
+
           RlsMultiTenant.tenant_class.find_by(id: tenant_id)
         rescue ActiveRecord::StatementInvalid, PG::Error
           nil
@@ -58,31 +58,28 @@ module RlsMultiTenant
           when String, Integer
             tenant_or_id
           else
-            raise ArgumentError, "Expected #{RlsMultiTenant.tenant_class_name} object or tenant_id, got #{tenant_or_id.class}"
+            raise ArgumentError,
+                  "Expected #{RlsMultiTenant.tenant_class_name} object or tenant_id, got #{tenant_or_id.class}"
           end
         end
 
         def validate_tenant_exists!(tenant_id)
           return if tenant_id.blank?
-          
-          unless RlsMultiTenant.tenant_class.exists?(id: tenant_id)
-            raise StandardError, "#{RlsMultiTenant.tenant_class_name} with id '#{tenant_id}' not found"
-          end
+
+          return if RlsMultiTenant.tenant_class.exists?(id: tenant_id)
+
+          raise StandardError, "#{RlsMultiTenant.tenant_class_name} with id '#{tenant_id}' not found"
         end
       end
 
       # Instance methods
-      def switch(tenant_or_id)
-        self.class.switch(tenant_or_id) { yield }
+      def switch(tenant_or_id, &block)
+        self.class.switch(tenant_or_id, &block)
       end
 
-      def switch!(tenant_or_id)
-        self.class.switch!(tenant_or_id)
-      end
+      delegate :switch!, to: :class
 
-      def reset!
-        self.class.reset!
-      end
+      delegate :reset!, to: :class
     end
   end
 end

@@ -9,6 +9,12 @@
 
 A Rails gem that provides PostgreSQL Row Level Security (RLS) based multi-tenancy for Rails applications.
 
+> 📚 **Learn more about PostgreSQL Row Level Security**: [PostgreSQL RLS Documentation](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
+
+## ⚠️ IMPORTANT: Database Security Setup for RLS
+
+**This gem relies on PostgreSQL Row-Level Security (RLS) for tenant isolation. You MUST create a dedicated database role with proper RLS permissions before using this gem in production.**
+
 ## Features
 
 - 🔒 **Row Level Security**: Automatic tenant isolation using PostgreSQL RLS
@@ -18,6 +24,50 @@ A Rails gem that provides PostgreSQL Row Level Security (RLS) based multi-tenanc
 - 🚀 **Generators**: Rails generators for quick setup
 - ⚙️ **Configurable**: Flexible configuration options
 - 🌐 **Subdomain Middleware**: Automatic tenant switching based on subdomain
+
+### Create Application Database Role
+
+Create a dedicated role for your Rails application:
+
+```sql
+CREATE ROLE app_user
+  WITH LOGIN
+       CREATEDB          -- can create databases
+       CREATEROLE        -- can create/modify other roles (except superuser)
+       NOINHERIT         -- does not inherit privileges from roles it belongs to
+       NOREPLICATION     -- cannot use replication
+       NOBYPASSRLS       -- cannot bypass Row-Level Security
+       NOSUPERUSER       -- is not a superuser
+       PASSWORD 'strong_password';
+```
+
+If you don't have a database created, you can create one with the new role:
+
+```sql
+CREATE DATABASE your_db_name OWNER app_user;
+```
+
+If you already have a database created, make sure to grant ownership of the database to the new role:
+
+```sql
+ALTER DATABASE your_db_name OWNER TO app_user;
+```
+
+### Why This Role Configuration is Critical for RLS
+
+- **`NOBYPASSRLS`**: **ESSENTIAL for RLS security** - prevents bypassing Row-Level Security policies that enforce tenant isolation
+- **`NOSUPERUSER`**: Prevents superuser privileges that could compromise RLS policies
+- **`LOGIN`**: Allows the role to connect to the database
+- **`CREATEDB`**: Enables database creation for development/testing environments
+- **`CREATEROLE`**: Allows creating other roles for application-specific users
+- **`NOINHERIT`**: Ensures the role does not inherit privileges from parent roles
+- **`NOREPLICATION`**: Prevents the role from being used for replication (security)
+
+**Without `NOBYPASSRLS`, Row-Level Security policies can be bypassed, completely breaking tenant isolation and exposing data across tenants.**
+
+### Update Database Configuration
+
+Update your `config/database.yml` to use the new role:
 
 ## Installation
 
@@ -42,33 +92,23 @@ bundle install
 
 2. **Configure the gem settings:**
    Edit `config/initializers/rls_multi_tenant.rb` to customize your tenant model:
-   ```ruby
-   RlsMultiTenant.configure do |config|
-     config.tenant_class_name = "Tenant"           # Change to your preferred tenant model name
-     config.tenant_id_column = :tenant_id          # Tenant ID column name
-     config.app_user_env_var = "POSTGRES_APP_USER" # Environment variable for app user
-     config.enable_security_validation = true      # Enable security checks
-     config.enable_subdomain_middleware = true     # Enable subdomain-based tenant switching (default: true)
-     config.subdomain_field = :subdomain           # Field to use for subdomain matching (default: :subdomain)
-   end
-   ```
-
-3. **Configure environment variables:**
-   ```bash
-   POSTGRES_USER=your_admin_user # This is the user that will run the migrations
-   POSTGRES_PASSWORD=your_admin_user_password
-   POSTGRES_APP_USER=your_app_user # This is the user that will run the app
-   POSTGRES_APP_PASSWORD=your_app_user_password
-   ```
-
-4. **Setup the tenant model and migrations:**
+    ```ruby
+    RlsMultiTenant.configure do |config|
+      config.tenant_class_name = "Tenant"           # Your tenant model class (e.g., "Organization", "Company")
+      config.tenant_id_column = :tenant_id          # Tenant ID column name
+      config.enable_security_validation = true      # Enable security checks (prevents running with superuser privileges)
+      config.enable_subdomain_middleware = true     # Enable subdomain-based tenant switching (default: true)
+      config.subdomain_field = :subdomain           # Field to use for subdomain matching (default: :subdomain)
+    end
+    ```
+3. **Setup the tenant model and migrations:**
    ```bash
    rails generate rls_multi_tenant:setup
    ```
 
-5. **Run migrations:**
+4. **Run migrations:**
    ```bash
-   rails db_as:admin[migrate] # Custom rake task to run migrations with admin privileges
+   rails db:migrate
    ```
 
 ## Usage
@@ -156,46 +196,6 @@ end
 - **Explicit Intent**: Models must explicitly include `TenantContext` to be tenant-constrained
 - **Fail-Safe**: Public models are clearly separated from tenant models
 - **No Configuration Drift**: Can't accidentally expose tenant data through misconfiguration
-
-## Configuration
-
-The gem is configured in `config/initializers/rls_multi_tenant.rb` (created by the install generator). You can customize the following options:
-
-```ruby
-RlsMultiTenant.configure do |config|
-  config.tenant_class_name = "Tenant"           # Your tenant model class (e.g., "Organization", "Company")
-  config.tenant_id_column = :tenant_id          # Tenant ID column name
-  config.app_user_env_var = "POSTGRES_APP_USER" # Environment variable for app user
-  config.enable_security_validation = true      # Enable security checks (prevents running with superuser privileges)
-  config.enable_subdomain_middleware = true     # Enable subdomain-based tenant switching (default: true)
-  config.subdomain_field = :subdomain           # Field to use for subdomain matching (default: :subdomain)
-end
-```
-
-**Important**: Configure these settings **before** running `rails generate rls_multi_tenant:setup`, as the setup generator will use these values to create the appropriate model and migrations.
-
-### Database Admin Task
-```bash
-# Run migrations with admin privileges (required because app user can't run migrations)
-rails db_as:admin[migrate]
-
-# Run seeds with admin privileges
-rails db_as:admin[seed]
-
-# Create database with admin privileges
-rails db_as:admin[create]
-
-# Drop database with admin privileges
-rails db_as:admin[drop]
-```
-
-## Security Features
-
-The gem includes multiple security layers:
-
-1. **Environment Validation**: Ensures `POSTGRES_APP_USER` is set and not privileged
-2. **Database User Validation**: Checks that the database user doesn't have SUPERUSER privileges
-3. **RLS Policies**: Automatic tenant isolation at the database level
 
 ## Requirements
 

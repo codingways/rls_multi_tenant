@@ -27,7 +27,7 @@ RSpec.describe RlsMultiTenant::Concerns::MultiTenant do
           end
         end
       end
-      
+
       # Test with string ID
       result = test_class.extract_tenant_id('tenant-123')
       expect(result).to eq('tenant-123')
@@ -44,7 +44,7 @@ RSpec.describe RlsMultiTenant::Concerns::MultiTenant do
           end
         end
       end
-      
+
       result = test_class.extract_tenant_id('tenant-456')
       expect(result).to eq('tenant-456')
     end
@@ -60,7 +60,7 @@ RSpec.describe RlsMultiTenant::Concerns::MultiTenant do
           end
         end
       end
-      
+
       result = test_class.extract_tenant_id(789)
       expect(result).to eq(789)
     end
@@ -76,10 +76,10 @@ RSpec.describe RlsMultiTenant::Concerns::MultiTenant do
           end
         end
       end
-      
-      expect {
+
+      expect do
         test_class.extract_tenant_id(Object.new)
-      }.to raise_error(ArgumentError, /Expected tenant object or tenant_id/)
+      end.to raise_error(ArgumentError, /Expected tenant object or tenant_id/)
     end
   end
 end

@@ -10,15 +10,14 @@ class <%= migration_class_name %> < ActiveRecord::Migration[<%= Rails.version.to
       t.timestamps
     end
 
-    # Enable Row Level Security
-    execute "ALTER TABLE <%= table_name %> ENABLE ROW LEVEL SECURITY"
-
     # Define RLS policy
     reversible do |dir|
       dir.up do
-        execute "CREATE POLICY <%= table_name %>_app_user ON <%= table_name %> TO #{ENV['<%= RlsMultiTenant.app_user_env_var %>']} USING (<%= tenant_id_column %> = NULLIF(current_setting('rls.<%= tenant_id_column %>', TRUE), '')::uuid)"
+        execute "ALTER TABLE <%= table_name %> ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY"
+        execute "CREATE POLICY <%= table_name %>_app_user ON <%= table_name %> USING (<%= tenant_id_column %> = NULLIF(current_setting('rls.<%= tenant_id_column %>', TRUE), '')::uuid)"
       end
       dir.down do
+        execute "ALTER TABLE <%= table_name %> DISABLE ROW LEVEL SECURITY, NO FORCE ROW LEVEL SECURITY"
         execute "DROP POLICY <%= table_name %>_app_user ON <%= table_name %>"
       end
     end
