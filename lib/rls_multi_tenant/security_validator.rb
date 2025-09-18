@@ -19,7 +19,8 @@ module RlsMultiTenant
 
           if superuser_check && superuser_check['rolsuper']
             raise SecurityError, "Database user '#{username}' has SUPERUSER privileges. " \
-                                "In order to use RLS Multi-tenant, you must use a non-privileged user without SUPERUSER rights."
+                                "In order to use RLS Multi-tenant, you must use a non-privileged user without SUPERUSER rights." \
+                                "Did you remember to edit database.yml in order to use the POSTGRES_APP_USER and POSTGRES_APP_PASSWORD?"
           end
 
           # Log the security check result
@@ -41,7 +42,8 @@ module RlsMultiTenant
           raise ConfigurationError, "#{RlsMultiTenant.app_user_env_var} environment variable must be set"
         elsif ["postgres", "root"].include?(app_user)
           raise SecurityError, "Cannot use privileged PostgreSQL user '#{app_user}'. " \
-                              "In order to use RLS Multi-tenant, you must use a non-privileged user without SUPERUSER rights."
+                              "In order to use RLS Multi-tenant, you must use a non-privileged user without SUPERUSER rights." \
+                              "Did you remember to edit database.yml in order to use the POSTGRES_APP_USER and POSTGRES_APP_PASSWORD?"
         end
       end
 
