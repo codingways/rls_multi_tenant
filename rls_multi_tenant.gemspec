@@ -9,7 +9,9 @@ Gem::Specification.new do |spec|
   spec.email = ['info@codingways.com']
 
   spec.summary = 'Rails gem for PostgreSQL Row Level Security (RLS) multi-tenant applications'
-  spec.description = 'A comprehensive gem that provides RLS-based multi-tenancy for Rails applications using PostgreSQL, including automatic tenant context switching, security validations, and migration helpers.'
+  spec.description = 'A comprehensive gem that provides RLS-based multi-tenancy for Rails applications ' \
+                     'using PostgreSQL, including automatic tenant context switching, security ' \
+                     'validations, and migration helpers.'
   spec.homepage = 'https://github.com/codingways/rls_multi_tenant'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.0.0'

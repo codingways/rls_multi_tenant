@@ -12,34 +12,55 @@ module RlsMultiTenant
         tenant = resolve_tenant_from_subdomain(request)
 
         if tenant
-          # Switch tenant context for the duration of the request
-          if defined?(Rails)
-            Rails.logger.info "[RLS Multi-Tenant] #{request.method} #{request.path} -> Tenant: #{tenant.name} (#{tenant.id})"
-          end
-          RlsMultiTenant.tenant_class.switch(tenant) do
-            @app.call(env)
-          end
+          handle_tenant_request(env, request, tenant)
         else
-          # No tenant found - check if we need tenant context
-          subdomain = extract_subdomain(request.host)
-          if subdomain.present? && subdomain != 'www'
-            # Subdomain exists but no tenant found - this is an error
-            if defined?(Rails)
-              Rails.logger.warn "[RLS Multi-Tenant] #{request.method} #{request.path} -> No tenant found for subdomain '#{subdomain}'"
-            end
-            raise RlsMultiTenant::Error,
-                  "No tenant found for subdomain '#{subdomain}'. Please ensure the tenant exists with the correct subdomain."
-          end
-          # If no subdomain, allow access to public models (models without TenantContext)
-          # Models that include TenantContext will automatically be constrained by RLS
-          if defined?(Rails)
-            Rails.logger.info "[RLS Multi-Tenant] #{request.method} #{request.path} -> Public access (no subdomain)"
-          end
-          @app.call(env)
+          handle_no_tenant_request(env, request)
         end
       end
 
       private
+
+      def handle_tenant_request(env, request, tenant)
+        log_tenant_access(request, tenant)
+        RlsMultiTenant.tenant_class.switch(tenant) do
+          @app.call(env)
+        end
+      end
+
+      def handle_no_tenant_request(env, request)
+        subdomain = extract_subdomain(request.host)
+
+        if subdomain.present? && subdomain != 'www'
+          handle_missing_tenant_error(request, subdomain)
+        else
+          handle_public_access(request)
+          @app.call(env)
+        end
+      end
+
+      def log_tenant_access(request, tenant)
+        return unless defined?(Rails)
+
+        Rails.logger.info "[RLS Multi-Tenant] #{request.method} #{request.path} -> Tenant: #{tenant.name} (#{tenant.id})"
+      end
+
+      def handle_missing_tenant_error(request, subdomain)
+        log_missing_tenant_warning(request, subdomain)
+        raise RlsMultiTenant::Error,
+              "No tenant found for subdomain '#{subdomain}'. Please ensure the tenant exists with the correct subdomain."
+      end
+
+      def log_missing_tenant_warning(request, subdomain)
+        return unless defined?(Rails)
+
+        Rails.logger.warn "[RLS Multi-Tenant] #{request.method} #{request.path} -> No tenant found for subdomain '#{subdomain}'"
+      end
+
+      def handle_public_access(request)
+        return unless defined?(Rails)
+
+        Rails.logger.info "[RLS Multi-Tenant] #{request.method} #{request.path} -> Public access (no subdomain)"
+      end
 
       def resolve_tenant_from_subdomain(request)
         subdomain = extract_subdomain(request.host)
@@ -71,13 +92,10 @@ module RlsMultiTenant
         # Split by dots and get the first part (subdomain)
         parts = host.split('.')
 
-        # Handle localhost development (e.g., foo.localhost:3000)
-        if parts.length == 2 && parts.last == 'localhost'
-          parts.first
-        # Handle standard domains (e.g., foo.example.com)
-        elsif parts.length >= 3
-          parts.first
-        end
+        # Handle localhost development (e.g., foo.localhost:3000) or standard domains (e.g., foo.example.com)
+        return unless (parts.length == 2 && parts.last == 'localhost') || parts.length >= 3
+
+        parts.first
       end
     end
   end

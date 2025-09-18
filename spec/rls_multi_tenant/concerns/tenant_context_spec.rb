@@ -14,7 +14,7 @@ RSpec.describe RlsMultiTenant::Concerns::TenantContext do
   end
 
   describe 'extract_tenant_id method' do
-    let(:tenant) { double('tenant', id: 'tenant-123') }
+    let(:tenant) { instance_double(Tenant, id: 'tenant-123') }
 
     it 'extracts id from tenant object' do
       test_class = Class.new do
@@ -85,7 +85,9 @@ RSpec.describe RlsMultiTenant::Concerns::TenantContext do
   end
 
   describe 'tenant validation' do
+    # rubocop:disable RSpec/VerifiedDoubles
     let(:tenant_class) { double('TenantClass') }
+    # rubocop:enable RSpec/VerifiedDoubles
     let(:tenant_id) { 'valid-tenant-id' }
     let(:invalid_tenant_id) { 'invalid-tenant-id' }
 

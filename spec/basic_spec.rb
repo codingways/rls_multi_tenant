@@ -69,7 +69,7 @@ RSpec.describe 'RLS Multi-Tenant Basic Tests' do
     end
 
     it 'can be instantiated with an app' do
-      app = double('app')
+      app = instance_double(Rack::App)
       middleware = RlsMultiTenant::Middleware::SubdomainTenantSelector.new(app)
       expect(middleware).to be_a(RlsMultiTenant::Middleware::SubdomainTenantSelector)
     end

@@ -14,11 +14,15 @@ module RlsMultiTenant
 
   # Configuration options
   class << self
-    attr_accessor :tenant_class_name, :tenant_id_column, :enable_security_validation, :enable_subdomain_middleware,
-                  :subdomain_field
+    attr_writer :tenant_class_name, :tenant_id_column, :enable_security_validation, :enable_subdomain_middleware,
+                :subdomain_field
 
     def configure
       yield self
+    end
+
+    def tenant_class_name
+      @tenant_class_name ||= 'Tenant'
     end
 
     def tenant_class

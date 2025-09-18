@@ -3,12 +3,14 @@ plugins:
   - rubocop-rspec
 
 AllCops:
+  SuggestExtensions: false
   TargetRubyVersion: 3.0
   NewCops: enable
   Exclude:
     - 'vendor/**/*'
     - 'spec/tmp/**/*'
     - 'tmp/**/*'
+    - 'lib/rls_multi_tenant/generators/**/templates/**/*'
 
 Style/Documentation:
   Enabled: false
@@ -23,12 +25,16 @@ Style/ClassAndModuleChildren:
   Enabled: false
 
 Layout/LineLength:
-  Max: 120
+  Max: 130
 
 Metrics/BlockLength:
+  Max: 50
   Exclude:
     - 'spec/**/*'
     - 'lib/rls_multi_tenant/generators/**/*'
+
+Metrics/MethodLength:
+  Max: 25
 
 RSpec/ExampleLength:
   Max: 20
@@ -43,4 +49,7 @@ RSpec/DescribeClass:
   Enabled: false
 
 RSpec/DescribeMethod:
+  Enabled: false
+
+Gemspec/DevelopmentDependencies:
   Enabled: false

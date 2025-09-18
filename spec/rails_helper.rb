@@ -18,7 +18,7 @@ module Rails
   end
 
   def self.application
-    @application ||= double('application')
+    @application ||= instance_double(Rails::Application)
   end
 
   class Railtie
@@ -32,11 +32,12 @@ end
 module ActiveRecord
   class Base
     def self.connection
-      @connection ||= double('connection')
+      @connection ||= instance_double(ActiveRecord::ConnectionAdapters::AbstractAdapter)
     end
 
     def self.connection_db_config
-      @connection_db_config ||= double('db_config', configuration_hash: { username: 'test_user' })
+      @connection_db_config ||= instance_double(ActiveRecord::DatabaseConfigurations::DatabaseConfig,
+                                                configuration_hash: { username: 'test_user' })
     end
 
     def self.execute(sql)
@@ -71,6 +72,24 @@ module ActionDispatch
     def host
       @env['HTTP_HOST'] || 'example.com'
     end
+  end
+end
+
+# Mock Rack
+module Rack
+  class App
+    def call(_env)
+      [200, {}, ['OK']]
+    end
+  end
+end
+
+# Mock Tenant class
+class Tenant
+  attr_reader :id
+
+  def initialize(id)
+    @id = id
   end
 end
 

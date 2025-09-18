@@ -6,7 +6,8 @@ module RlsMultiTenant
       extend ActiveSupport::Concern
 
       included do
-        belongs_to :tenant, class_name: RlsMultiTenant.tenant_class_name, foreign_key: RlsMultiTenant.tenant_id_column
+        belongs_to :tenant, class_name: RlsMultiTenant.tenant_class_name.to_s,
+                            foreign_key: RlsMultiTenant.tenant_id_column
 
         validates RlsMultiTenant.tenant_id_column, presence: true
 

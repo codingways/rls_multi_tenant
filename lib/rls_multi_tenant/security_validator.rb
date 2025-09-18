@@ -18,7 +18,8 @@ module RlsMultiTenant
 
           if bypassrls_check && bypassrls_check['rolbypassrls']
             raise SecurityError, "Database user '#{username}' has BYPASSRLS privilege. " \
-                                 'In order to use RLS Multi-tenant, you must use a non-privileged user without BYPASSRLS privilege.'
+                                 'In order to use RLS Multi-tenant, you must use a non-privileged user ' \
+                                 'without BYPASSRLS privilege.'
           end
 
           # Log the security check result

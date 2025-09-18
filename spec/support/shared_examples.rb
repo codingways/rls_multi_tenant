@@ -4,8 +4,9 @@
 
 RSpec.shared_examples 'a tenant context method' do |method_name|
   it 'delegates to class method' do
-    expect(described_class).to receive(method_name).with(tenant)
+    allow(described_class).to receive(method_name)
     instance.send(method_name, tenant)
+    expect(described_class).to have_received(method_name).with(tenant)
   end
 end
 

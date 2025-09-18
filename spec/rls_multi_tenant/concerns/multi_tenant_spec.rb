@@ -14,7 +14,7 @@ RSpec.describe RlsMultiTenant::Concerns::MultiTenant do
   end
 
   describe 'extract_tenant_id method' do
-    let(:tenant) { double('tenant', id: 'tenant-123') }
+    let(:tenant) { instance_double(Tenant, id: 'tenant-123') }
 
     it 'extracts id from tenant object' do
       test_class = Class.new do
