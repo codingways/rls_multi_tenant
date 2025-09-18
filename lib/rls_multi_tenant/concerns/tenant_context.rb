@@ -16,6 +16,7 @@ module RlsMultiTenant
         # Switch tenant context for a block
         def switch(tenant_or_id)
           tenant_id = extract_tenant_id(tenant_or_id)
+          validate_tenant_exists!(tenant_id)
           connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(tenant_id))
           yield
         ensure
@@ -25,6 +26,7 @@ module RlsMultiTenant
         # Switch tenant context permanently (until reset)
         def switch!(tenant_or_id)
           tenant_id = extract_tenant_id(tenant_or_id)
+          validate_tenant_exists!(tenant_id)
           connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(tenant_id))
         end
 
@@ -57,6 +59,14 @@ module RlsMultiTenant
             tenant_or_id
           else
             raise ArgumentError, "Expected #{RlsMultiTenant.tenant_class_name} object or tenant_id, got #{tenant_or_id.class}"
+          end
+        end
+
+        def validate_tenant_exists!(tenant_id)
+          return if tenant_id.blank?
+          
+          unless RlsMultiTenant.tenant_class.exists?(id: tenant_id)
+            raise StandardError, "#{RlsMultiTenant.tenant_class_name} with id '#{tenant_id}' not found"
           end
         end
       end
