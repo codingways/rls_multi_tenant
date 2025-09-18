@@ -48,8 +48,8 @@ module RlsMultiTenant
       private
 
       def skip_validation?
-        # Skip validation if we're running install generator
-        return true if ARGV.any? { |arg| arg.include?('rls_multi_tenant:install') }
+        # Skip validation if we're running an install or setup generator
+        return true if ARGV.any? { |arg| arg.include?('rls_multi_tenant:install') || arg.include?('rls_multi_tenant:setup') }
         
         # Skip validation if we're in admin mode (set by db_as:admin task)
         return true if ENV['RLS_MULTI_TENANT_ADMIN_MODE'] == 'true'
