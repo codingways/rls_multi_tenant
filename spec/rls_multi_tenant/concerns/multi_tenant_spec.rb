@@ -13,73 +13,21 @@ RSpec.describe RlsMultiTenant::Concerns::MultiTenant do
     end
   end
 
-  describe 'extract_tenant_id method' do
-    let(:tenant) { instance_double(Tenant, id: 'tenant-123') }
-
-    it 'extracts id from tenant object' do
-      test_class = Class.new do
-        def self.extract_tenant_id(tenant_or_id)
-          case tenant_or_id
-          when String, Integer
-            tenant_or_id
-          else
-            raise ArgumentError, "Expected tenant object or tenant_id, got #{tenant_or_id.class}"
-          end
-        end
+  describe 'module functionality' do
+    # Test that the module can be included in a class
+    it 'can be included in a class' do
+      # Mock ActiveRecord::Base for the test
+      mock_active_record = Class.new do
+        def self.belongs_to(*args); end
+        def self.validates(*args); end
+        def self.before_validation(*args); end
       end
-
-      # Test with string ID
-      result = test_class.extract_tenant_id('tenant-123')
-      expect(result).to eq('tenant-123')
-    end
-
-    it 'returns string id as is' do
-      test_class = Class.new do
-        def self.extract_tenant_id(tenant_or_id)
-          case tenant_or_id
-          when String, Integer
-            tenant_or_id
-          else
-            raise ArgumentError, "Expected tenant object or tenant_id, got #{tenant_or_id.class}"
-          end
-        end
+      
+      test_class = Class.new(mock_active_record) do
+        include RlsMultiTenant::Concerns::MultiTenant
       end
-
-      result = test_class.extract_tenant_id('tenant-456')
-      expect(result).to eq('tenant-456')
-    end
-
-    it 'returns integer id as is' do
-      test_class = Class.new do
-        def self.extract_tenant_id(tenant_or_id)
-          case tenant_or_id
-          when String, Integer
-            tenant_or_id
-          else
-            raise ArgumentError, "Expected tenant object or tenant_id, got #{tenant_or_id.class}"
-          end
-        end
-      end
-
-      result = test_class.extract_tenant_id(789)
-      expect(result).to eq(789)
-    end
-
-    it 'raises error for invalid input' do
-      test_class = Class.new do
-        def self.extract_tenant_id(tenant_or_id)
-          case tenant_or_id
-          when String, Integer
-            tenant_or_id
-          else
-            raise ArgumentError, "Expected tenant object or tenant_id, got #{tenant_or_id.class}"
-          end
-        end
-      end
-
-      expect do
-        test_class.extract_tenant_id(Object.new)
-      end.to raise_error(ArgumentError, /Expected tenant object or tenant_id/)
+      
+      expect(test_class.ancestors).to include(RlsMultiTenant::Concerns::MultiTenant)
     end
   end
 end

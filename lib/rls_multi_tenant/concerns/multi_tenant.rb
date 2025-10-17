@@ -27,22 +27,6 @@ module RlsMultiTenant
           end
         end
       end
-
-      class_methods do
-        private
-
-        def extract_tenant_id(tenant_or_id)
-          case tenant_or_id
-          when RlsMultiTenant.tenant_class
-            tenant_or_id.id
-          when String, Integer
-            tenant_or_id
-          else
-            raise ArgumentError,
-                  "Expected #{RlsMultiTenant.tenant_class_name} object or tenant_id, got #{tenant_or_id.class}"
-          end
-        end
-      end
     end
   end
 end

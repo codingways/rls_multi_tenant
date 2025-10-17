@@ -53,7 +53,7 @@ module RlsMultiTenant
 
         def extract_tenant_id(tenant_or_id)
           case tenant_or_id
-          when RlsMultiTenant.tenant_class
+          when ->(obj) { obj.is_a?(RlsMultiTenant.tenant_class) }
             tenant_or_id.id
           when String, Integer
             tenant_or_id
