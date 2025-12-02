@@ -84,7 +84,7 @@ module RlsMultiTenant
       end
 
       def extract_subdomain(host)
-        return nil if host.blank?
+        return nil if host.blank? || ip_host?(host)
 
         # Remove port if present
         host = host.split(':').first
@@ -96,6 +96,10 @@ module RlsMultiTenant
         return unless (parts.length == 2 && parts.last == 'localhost') || parts.length >= 3
 
         parts.first
+      end
+
+      def ip_host?(host)
+        !/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/.match(host).nil?
       end
     end
   end
