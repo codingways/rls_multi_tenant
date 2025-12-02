@@ -30,7 +30,7 @@ module RlsMultiTenant
       def handle_no_tenant_request(env, request)
         subdomain = extract_subdomain(request.host)
 
-        if subdomain.present? && subdomain != 'www'
+        if subdomain.present? && !excluded_subdomain?(subdomain)
           handle_missing_tenant_error(request, subdomain)
         else
           handle_public_access(request)
@@ -64,7 +64,7 @@ module RlsMultiTenant
 
       def resolve_tenant_from_subdomain(request)
         subdomain = extract_subdomain(request.host)
-        return nil if subdomain.blank? || subdomain == 'www'
+        return nil if subdomain.blank? || excluded_subdomain?(subdomain)
 
         # Look up tenant by subdomain only
         tenant_class = RlsMultiTenant.tenant_class
@@ -100,6 +100,13 @@ module RlsMultiTenant
 
       def ip_host?(host)
         !/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/.match(host).nil?
+      end
+
+      def excluded_subdomain?(subdomain)
+        return false if subdomain.blank?
+        
+        excluded = RlsMultiTenant.excluded_subdomains
+        excluded.is_a?(Array) && excluded.include?(subdomain.to_s.downcase)
       end
     end
   end

@@ -16,4 +16,9 @@ RlsMultiTenant.configure do |config|
   # Configure the field to use for subdomain matching (default: :subdomain)
   # This should be a field on your tenant model that contains the subdomain
   config.subdomain_field = :subdomain
+
+  # Configure excluded subdomains (default: ['www'])
+  # Subdomains in this list will be treated as if they were nil (public access)
+  # Example: ['www', 'admin', 'api'] - these subdomains won't trigger tenant lookup
+  config.excluded_subdomains = ['www']
 end

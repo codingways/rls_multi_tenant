@@ -17,7 +17,7 @@ module RlsMultiTenant
   # Configuration options
   class << self
     attr_writer :tenant_class_name, :tenant_id_column, :enable_security_validation, :enable_subdomain_middleware,
-                :subdomain_field
+                :subdomain_field, :excluded_subdomains
 
     def configure
       yield self
@@ -46,6 +46,10 @@ module RlsMultiTenant
     def subdomain_field
       @subdomain_field ||= :subdomain
     end
+
+    def excluded_subdomains
+      @excluded_subdomains ||= ['www']
+    end
   end
 
   # Default configuration
@@ -54,4 +58,5 @@ module RlsMultiTenant
   self.enable_security_validation = true
   self.enable_subdomain_middleware = true
   self.subdomain_field = :subdomain
+  self.excluded_subdomains = ['www']
 end

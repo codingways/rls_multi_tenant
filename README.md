@@ -99,6 +99,7 @@ bundle install
       config.enable_security_validation = true      # Enable security checks (prevents running with superuser privileges)
       config.enable_subdomain_middleware = true     # Enable subdomain-based tenant switching (default: true)
       config.subdomain_field = :subdomain           # Field to use for subdomain matching (default: :subdomain)
+      config.excluded_subdomains = ['www']          # Subdomains to exclude from tenant lookup (default: ['www'])
     end
     ```
 3. **Setup the tenant model and migrations:**
@@ -171,6 +172,27 @@ tenant2 = Tenant.create!(name: "Company B", subdomain: "company-b")
 # Users visiting company-b.yourdomain.com will automatically be in tenant2's context
 # Users visiting yourdomain.com (no subdomain) will have no tenant context
 ```
+
+**Excluded Subdomains:**
+
+You can configure subdomains that should be excluded from tenant lookup and treated as public access (no tenant context). By default, `www` is excluded.
+
+```ruby
+RlsMultiTenant.configure do |config|
+  # Exclude multiple subdomains from tenant lookup
+  config.excluded_subdomains = ['www', 'admin', 'api']
+end
+```
+
+When a request comes from an excluded subdomain (e.g., `www.yourdomain.com`), the middleware will:
+- Skip tenant lookup
+- Treat the request as public access (no tenant context)
+- Not raise an error for missing tenant
+
+This is useful for:
+- Main website access (`www`)
+- Admin panels that shouldn't be tenant-scoped
+- API endpoints that need public access
 
 ### Public Access (Non-Tenanted Models)
 
