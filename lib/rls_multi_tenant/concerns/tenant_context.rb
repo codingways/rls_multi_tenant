@@ -14,22 +14,17 @@ module RlsMultiTenant
           "rls.#{RlsMultiTenant.tenant_id_column}"
         end
 
-        def tenant_stack
-          Thread.current[:"#{name}_tenant_stack"] ||= []
-        end
-
         # Switch tenant context for a block
         def switch(tenant_or_id)
-          tenant_id = extract_tenant_id(tenant_or_id)
-          validate_tenant_exists!(tenant_id)
-
           previous_tenant_id = current_tenant_id
-          tenant_stack.push(previous_tenant_id)
-
-          connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(tenant_id))
+          switch!(tenant_or_id)
           yield
         ensure
-          restore_tenant_context!
+          begin
+            switch!(previous_tenant_id)
+          rescue StandardError => _e
+            reset!
+          end
         end
 
         # Switch tenant context permanently (until reset)
@@ -41,7 +36,6 @@ module RlsMultiTenant
 
         # Reset tenant context
         def reset!
-          tenant_stack.clear
           connection.execute format(RESET_TENANT_ID_SQL, tenant_session_var)
         end
 
@@ -49,8 +43,8 @@ module RlsMultiTenant
         def current
           return nil unless connection.active?
 
-          result = connection.execute("SHOW #{tenant_session_var}")
-          tenant_id = result.first&.dig(tenant_session_var)
+          result = connection.execute("SELECT current_setting('#{tenant_session_var}', true) AS tenant_id")
+          tenant_id = result.first&.dig('tenant_id')
 
           return nil if tenant_id.blank?
 
@@ -64,20 +58,10 @@ module RlsMultiTenant
         def current_tenant_id
           return nil unless connection.active?
 
-          result = connection.execute("SHOW #{tenant_session_var}")
-          result.first&.dig(tenant_session_var)
+          result = connection.execute("SELECT current_setting('#{tenant_session_var}', true) AS tenant_id")
+          result.first&.dig('tenant_id')
         rescue ActiveRecord::StatementInvalid, PG::Error
           nil
-        end
-
-        def restore_tenant_context!
-          previous_tenant_id = tenant_stack.pop
-
-          if previous_tenant_id.present?
-            connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(previous_tenant_id))
-          else
-            connection.execute format(RESET_TENANT_ID_SQL, tenant_session_var)
-          end
         end
 
         def extract_tenant_id(tenant_or_id)
