@@ -4,11 +4,17 @@ require 'rails_helper'
 
 RSpec.describe 'RLS Multi-Tenant Basic Tests' do
   describe 'RlsMultiTenant module' do
-    it 'has correct default configuration' do
+    it 'has correct default tenant configuration' do
       expect(RlsMultiTenant.tenant_class_name).to eq('Tenant')
       expect(RlsMultiTenant.tenant_id_column).to eq(:tenant_id)
+    end
+
+    it 'has correct default security configuration' do
       expect(RlsMultiTenant.enable_security_validation).to be true
       expect(RlsMultiTenant.enable_subdomain_middleware).to be true
+    end
+
+    it 'has correct default subdomain configuration' do
       expect(RlsMultiTenant.subdomain_field).to eq(:subdomain)
       expect(RlsMultiTenant.excluded_subdomains).to eq(['www'])
     end
@@ -20,8 +26,8 @@ RSpec.describe 'RLS Multi-Tenant Basic Tests' do
       RlsMultiTenant.tenant_class_name = 'Organization'
       expect(RlsMultiTenant.tenant_class_name).to eq('Organization')
 
-      RlsMultiTenant.excluded_subdomains = ['www', 'admin', 'api']
-      expect(RlsMultiTenant.excluded_subdomains).to eq(['www', 'admin', 'api'])
+      RlsMultiTenant.excluded_subdomains = %w[www admin api]
+      expect(RlsMultiTenant.excluded_subdomains).to eq(%w[www admin api])
 
       # Reset
       RlsMultiTenant.tenant_class_name = original_name
@@ -83,21 +89,21 @@ RSpec.describe 'RLS Multi-Tenant Basic Tests' do
     it 'excludes configured subdomains from tenant lookup' do
       # Test that excluded_subdomains configuration is respected
       original_excluded = RlsMultiTenant.excluded_subdomains
-      
-      RlsMultiTenant.excluded_subdomains = ['www', 'admin']
-      
+
+      RlsMultiTenant.excluded_subdomains = %w[www admin]
+
       middleware = RlsMultiTenant::Middleware::SubdomainTenantSelector.new(instance_double(Rack::App))
-      
+
       # Test excluded_subdomain? method via reflection
       excluded_method = middleware.send(:excluded_subdomain?, 'www')
       expect(excluded_method).to be true
-      
+
       excluded_method = middleware.send(:excluded_subdomain?, 'admin')
       expect(excluded_method).to be true
-      
+
       excluded_method = middleware.send(:excluded_subdomain?, 'tenant1')
       expect(excluded_method).to be false
-      
+
       # Reset
       RlsMultiTenant.excluded_subdomains = original_excluded
     end

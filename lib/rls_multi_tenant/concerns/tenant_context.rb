@@ -8,19 +8,28 @@ module RlsMultiTenant
       SET_TENANT_ID_SQL = 'SET %s = %s'
       RESET_TENANT_ID_SQL = 'RESET %s'
 
+      # rubocop:disable Metrics/BlockLength
       class_methods do
         def tenant_session_var
           "rls.#{RlsMultiTenant.tenant_id_column}"
+        end
+
+        def tenant_stack
+          Thread.current[:"#{name}_tenant_stack"] ||= []
         end
 
         # Switch tenant context for a block
         def switch(tenant_or_id)
           tenant_id = extract_tenant_id(tenant_or_id)
           validate_tenant_exists!(tenant_id)
+
+          previous_tenant_id = current_tenant_id
+          tenant_stack.push(previous_tenant_id)
+
           connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(tenant_id))
           yield
         ensure
-          reset!
+          restore_tenant_context!
         end
 
         # Switch tenant context permanently (until reset)
@@ -32,6 +41,7 @@ module RlsMultiTenant
 
         # Reset tenant context
         def reset!
+          tenant_stack.clear
           connection.execute format(RESET_TENANT_ID_SQL, tenant_session_var)
         end
 
@@ -50,6 +60,25 @@ module RlsMultiTenant
         end
 
         private
+
+        def current_tenant_id
+          return nil unless connection.active?
+
+          result = connection.execute("SHOW #{tenant_session_var}")
+          result.first&.dig(tenant_session_var)
+        rescue ActiveRecord::StatementInvalid, PG::Error
+          nil
+        end
+
+        def restore_tenant_context!
+          previous_tenant_id = tenant_stack.pop
+
+          if previous_tenant_id.present?
+            connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(previous_tenant_id))
+          else
+            connection.execute format(RESET_TENANT_ID_SQL, tenant_session_var)
+          end
+        end
 
         def extract_tenant_id(tenant_or_id)
           case tenant_or_id
@@ -71,6 +100,7 @@ module RlsMultiTenant
           raise StandardError, "#{RlsMultiTenant.tenant_class_name} with id '#{tenant_id}' not found"
         end
       end
+      # rubocop:enable Metrics/BlockLength
 
       # Instance methods
       def switch(tenant_or_id, &block)

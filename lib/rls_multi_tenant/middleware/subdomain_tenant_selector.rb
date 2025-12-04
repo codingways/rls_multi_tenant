@@ -104,7 +104,7 @@ module RlsMultiTenant
 
       def excluded_subdomain?(subdomain)
         return false if subdomain.blank?
-        
+
         excluded = RlsMultiTenant.excluded_subdomains
         excluded.is_a?(Array) && excluded.include?(subdomain.to_s.downcase)
       end

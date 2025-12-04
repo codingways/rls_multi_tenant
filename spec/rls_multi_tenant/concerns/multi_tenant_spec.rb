@@ -22,12 +22,12 @@ RSpec.describe RlsMultiTenant::Concerns::MultiTenant do
         def self.validates(*args); end
         def self.before_validation(*args); end
       end
-      
+
       test_class = Class.new(mock_active_record) do
         include RlsMultiTenant::Concerns::MultiTenant
       end
-      
-      expect(test_class.ancestors).to include(RlsMultiTenant::Concerns::MultiTenant)
+
+      expect(test_class.ancestors).to include(described_class)
     end
   end
 end
