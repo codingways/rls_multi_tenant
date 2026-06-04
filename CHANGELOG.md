@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-06-04
+
+Corrects two bugs in the 0.3.0 security work, both uncovered by a new
+real-PostgreSQL integration suite.
+
+### Fixed
+
+- **Security validator no longer rejects valid roles.** 0.3.0 used `pg_has_role`
+  to flag BYPASSRLS inherited through role membership, but PostgreSQL does not
+  inherit the SUPERUSER or BYPASSRLS role attributes through membership — only
+  privileges (GRANTs). A role that merely belongs to a BYPASSRLS group does not
+  bypass RLS unless it explicitly `SET ROLE`s to it. The validator now checks
+  only `current_user`'s own `rolsuper` / `rolbypassrls`, which is what actually
+  governs RLS enforcement. Verified empirically against PostgreSQL 16.
+- **Tenant context restore no longer masks an aborted-transaction error.** When
+  a `switch` block hit a database error that aborts the transaction (e.g. a
+  WITH CHECK policy violation), the ensure clause ran `SET LOCAL` to restore the
+  previous tenant and raised `PG::InFailedSqlTransaction`, hiding the original
+  error. The restore now ignores `ActiveRecord::StatementInvalid`; the rollback
+  clears the `SET LOCAL` anyway.
+
+### Internal
+
+- Added a real-PostgreSQL integration suite (provisions privileged/unprivileged
+  roles, schema and the RLS policy) covering tenant isolation, WITH CHECK
+  enforcement, context lifecycle and the security validator; the suite
+  auto-skips when no database is reachable.
+- Replaced mocked-only and tautological specs with behavior-driven unit specs,
+  real generator invocations, SimpleCov coverage, per-example configuration
+  isolation, randomized order, and a CI Ruby×Rails matrix with a Postgres
+  service.
+
 ## [0.3.0] - 2026-06-04
 
 Security-focused release. Hardens tenant isolation and SQL handling.
