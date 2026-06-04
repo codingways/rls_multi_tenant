@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'ipaddr'
+
 module RlsMultiTenant
   module Middleware
     class SubdomainTenantSelector
@@ -84,13 +86,13 @@ module RlsMultiTenant
       end
 
       def extract_subdomain(host)
-        return nil if host.blank? || ip_host?(host)
+        return nil if host.blank?
 
-        # Remove port if present
-        host = host.split(':').first
+        hostname = extract_hostname(host)
+        return nil if hostname.blank? || ip_host?(hostname)
 
         # Split by dots and get the first part (subdomain)
-        parts = host.split('.')
+        parts = hostname.split('.')
 
         # Handle localhost development (e.g., foo.localhost:3000) or standard domains (e.g., foo.example.com)
         return unless (parts.length == 2 && parts.last == 'localhost') || parts.length >= 3
@@ -98,8 +100,26 @@ module RlsMultiTenant
         parts.first
       end
 
-      def ip_host?(host)
-        !/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/.match(host).nil?
+      # Strip an optional :port and IPv6 brackets, returning the bare hostname or
+      # IP literal. Handles host, host:port, ipv4, ipv4:port, [ipv6], [ipv6]:port
+      # and bare ipv6.
+      def extract_hostname(host)
+        if host.start_with?('[') # [ipv6] or [ipv6]:port
+          host[/\A\[(.+?)\]/, 1]
+        elsif host.count(':') > 1 # bare ipv6 (no port)
+          host
+        else # hostname or ipv4, optionally with :port
+          host.split(':').first
+        end
+      end
+
+      def ip_host?(hostname)
+        return false if hostname.blank?
+
+        IPAddr.new(hostname)
+        true
+      rescue IPAddr::InvalidAddressError
+        false
       end
 
       def excluded_subdomain?(subdomain)

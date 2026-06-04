@@ -155,13 +155,11 @@ RSpec.describe RlsMultiTenant::Concerns::TenantContext do
       allow(mock_connection).to receive(:execute) do |sql|
         if sql.include?('current_setting')
           [{ 'tenant_id' => tenant_state[:current] }]
-        elsif sql.include?('TO DEFAULT')
+        elsif sql.include?('TO DEFAULT') || sql.start_with?('RESET')
           tenant_state[:current] = nil
         elsif sql.start_with?('SET')
           tenant_id_match = sql.match(/SET (?:LOCAL )?#{Regexp.escape(tenant_session_var)} = '(.+)'/)
           tenant_state[:current] = tenant_id_match[1] if tenant_id_match
-        elsif sql.start_with?('RESET')
-          tenant_state[:current] = nil
         end
       end
 
