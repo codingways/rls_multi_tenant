@@ -42,7 +42,7 @@ module RlsMultiTenant
             begin
               yield
             ensure
-              apply_tenant_context(previous_tenant_id, local: true)
+              restore_tenant_context(previous_tenant_id)
             end
           end
         end
@@ -80,6 +80,17 @@ module RlsMultiTenant
         end
 
         private
+
+        # Restore the previous context on the way out of a `switch` block.
+        # If the block aborted the transaction (e.g. a policy violation), any
+        # further statement raises until rollback; that rollback will clear the
+        # SET LOCAL anyway, so the failure is safe to ignore and we must not let
+        # it mask the original error escaping the block.
+        def restore_tenant_context(previous_tenant_id)
+          apply_tenant_context(previous_tenant_id, local: true)
+        rescue ActiveRecord::StatementInvalid
+          nil
+        end
 
         # Apply (or clear, when tenant_id is blank) the tenant context.
         # local: true uses SET LOCAL (transaction-scoped); false uses session SET.
