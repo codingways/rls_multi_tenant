@@ -77,7 +77,7 @@ module IntegrationDB
 
   def create_roles!
     [APP_ROLE, BYPASS_ROLE, MEMBER_ROLE].each do |role|
-      admin_exec(<<~SQL)
+      admin_exec(<<~SQL.squish)
         DO $$BEGIN
           IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '#{role}') THEN
             CREATE ROLE #{role} LOGIN PASSWORD '#{ROLE_PASSWORD}';
@@ -86,7 +86,7 @@ module IntegrationDB
       SQL
     end
 
-    admin_exec(<<~SQL)
+    admin_exec(<<~SQL.squish)
       DO $$BEGIN
         IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '#{GROUP_ROLE}') THEN
           CREATE ROLE #{GROUP_ROLE} NOLOGIN;
@@ -104,14 +104,14 @@ module IntegrationDB
   def create_schema!
     admin_exec('DROP TABLE IF EXISTS posts CASCADE')
     admin_exec('DROP TABLE IF EXISTS tenants CASCADE')
-    admin_exec(<<~SQL)
+    admin_exec(<<~SQL.squish)
       CREATE TABLE tenants (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         name text NOT NULL,
         subdomain text
       )
     SQL
-    admin_exec(<<~SQL)
+    admin_exec(<<~SQL.squish)
       CREATE TABLE posts (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         tenant_id uuid NOT NULL REFERENCES tenants(id),
@@ -142,7 +142,7 @@ module IntegrationDB
 
   def seed_tenant!(name:, subdomain: nil)
     row = admin_exec(
-      "INSERT INTO tenants (name, subdomain) VALUES " \
+      'INSERT INTO tenants (name, subdomain) VALUES ' \
       "('#{name}', #{subdomain ? "'#{subdomain}'" : 'NULL'}) RETURNING id"
     ).first
     row['id']

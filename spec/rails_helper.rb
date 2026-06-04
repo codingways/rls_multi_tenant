@@ -16,7 +16,7 @@ module Rails
     def self.initializer(_name, **_options); end
   end
 
-  class Application; end
+  Application = Class.new
 
   def self.logger
     @logger ||= Logger.new(StringIO.new)

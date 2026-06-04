@@ -36,6 +36,10 @@ Metrics/BlockLength:
 Metrics/MethodLength:
   Max: 25
 
+Metrics/ModuleLength:
+  Exclude:
+    - 'spec/**/*'
+
 RSpec/ExampleLength:
   Max: 20
 
@@ -50,6 +54,16 @@ RSpec/DescribeClass:
 
 RSpec/DescribeMethod:
   Enabled: false
+
+# The integration suite uses plain ActiveRecord models (no ApplicationRecord)
+# and scenario-named spec files rather than one-file-per-class.
+Rails/ApplicationRecord:
+  Exclude:
+    - 'spec/**/*'
+
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - 'spec/integration/**/*'
 
 Gemspec/DevelopmentDependencies:
   Enabled: false
