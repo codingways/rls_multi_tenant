@@ -6,7 +6,9 @@ module RlsMultiTenant
       extend ActiveSupport::Concern
 
       SET_TENANT_ID_SQL = 'SET %s = %s'
+      SET_LOCAL_TENANT_ID_SQL = 'SET LOCAL %s = %s'
       RESET_TENANT_ID_SQL = 'RESET %s'
+      RESET_LOCAL_TENANT_ID_SQL = 'SET LOCAL %s TO DEFAULT'
 
       # rubocop:disable Metrics/BlockLength
       class_methods do
@@ -14,24 +16,39 @@ module RlsMultiTenant
           "rls.#{RlsMultiTenant.tenant_id_column}"
         end
 
-        # Switch tenant context for a block
+        # Switch tenant context for a block.
+        #
+        # Uses SET LOCAL inside a transaction so PostgreSQL itself scopes the
+        # tenant context to the transaction and guarantees it is cleared when
+        # the transaction ends — even if the block raises or the process dies
+        # mid-request. This prevents the context from leaking onto a pooled
+        # connection and being reused by a different tenant's request.
         def switch(tenant_or_id)
-          previous_tenant_id = current_tenant_id
-          switch!(tenant_or_id)
-          yield
-        ensure
-          begin
-            switch!(previous_tenant_id)
-          rescue StandardError => _e
-            reset!
+          tenant_id = extract_tenant_id(tenant_or_id)
+          validate_tenant_exists!(tenant_id)
+
+          connection.transaction(requires_new: true) do
+            previous_tenant_id = current_tenant_id
+            apply_tenant_context(tenant_id, local: true)
+            begin
+              yield
+            ensure
+              apply_tenant_context(previous_tenant_id, local: true)
+            end
           end
         end
 
-        # Switch tenant context permanently (until reset)
+        # Switch tenant context permanently (until reset).
+        #
+        # WARNING: this sets a session-level variable that persists on the
+        # connection until reset! is called. On a pooled connection it can leak
+        # to subsequent requests. Prefer the block form `switch` whenever
+        # possible; only use switch! for the console or single-tenant scripts,
+        # and always pair it with reset!.
         def switch!(tenant_or_id)
           tenant_id = extract_tenant_id(tenant_or_id)
           validate_tenant_exists!(tenant_id)
-          connection.execute format(SET_TENANT_ID_SQL, tenant_session_var, connection.quote(tenant_id))
+          apply_tenant_context(tenant_id, local: false)
         end
 
         # Reset tenant context
@@ -55,6 +72,18 @@ module RlsMultiTenant
 
         private
 
+        # Apply (or clear, when tenant_id is blank) the tenant context.
+        # local: true uses SET LOCAL (transaction-scoped); false uses session SET.
+        def apply_tenant_context(tenant_id, local:)
+          if tenant_id.blank?
+            reset_sql = local ? RESET_LOCAL_TENANT_ID_SQL : RESET_TENANT_ID_SQL
+            connection.execute format(reset_sql, tenant_session_var)
+          else
+            set_sql = local ? SET_LOCAL_TENANT_ID_SQL : SET_TENANT_ID_SQL
+            connection.execute format(set_sql, tenant_session_var, connection.quote(tenant_id))
+          end
+        end
+
         def current_tenant_id
           return nil unless connection.active?
 
@@ -66,6 +95,8 @@ module RlsMultiTenant
 
         def extract_tenant_id(tenant_or_id)
           case tenant_or_id
+          when nil
+            nil
           when ->(obj) { obj.is_a?(RlsMultiTenant.tenant_class) }
             tenant_or_id.id
           when String, Integer

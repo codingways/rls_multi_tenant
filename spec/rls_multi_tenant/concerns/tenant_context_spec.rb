@@ -148,14 +148,17 @@ RSpec.describe RlsMultiTenant::Concerns::TenantContext do
       mock_connection = double('Connection')
       # rubocop:enable RSpec/VerifiedDoubles
       allow(mock_connection).to receive(:active?).and_return(true)
+      allow(mock_connection).to receive(:transaction) { |*_args, &blk| blk.call }
 
       tenant_state = { current: nil }
 
       allow(mock_connection).to receive(:execute) do |sql|
         if sql.include?('current_setting')
           [{ 'tenant_id' => tenant_state[:current] }]
+        elsif sql.include?('TO DEFAULT')
+          tenant_state[:current] = nil
         elsif sql.start_with?('SET')
-          tenant_id_match = sql.match(/SET #{Regexp.escape(tenant_session_var)} = '(.+)'/)
+          tenant_id_match = sql.match(/SET (?:LOCAL )?#{Regexp.escape(tenant_session_var)} = '(.+)'/)
           tenant_state[:current] = tenant_id_match[1] if tenant_id_match
         elsif sql.start_with?('RESET')
           tenant_state[:current] = nil
