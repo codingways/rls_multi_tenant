@@ -21,12 +21,7 @@ RSpec.describe RlsMultiTenant do
   end
 
   describe '.tenant_class' do
-    around do |example|
-      original = described_class.tenant_class_name
-      example.run
-      described_class.tenant_class_name = original
-    end
-
+    # Config is snapshotted/restored globally (see spec/support/configuration.rb).
     it 'resolves the configured class name on every call (not memoized)' do
       stub_const('Organization', Class.new)
       described_class.tenant_class_name = 'Organization'
