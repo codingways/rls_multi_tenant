@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-06-04
+
+### Added
+
+- **Apartment-style switching by a unique field.** `Tenant.switch_by(value)`
+  resolves the tenant by a unique column (defaulting to the configured
+  `subdomain_field`) and switches context for the block; pass `attribute:` to
+  use another column (e.g. `switch_by('acme', attribute: :slug)`). A permanent
+  `switch_by!` variant is also available. Both raise `RlsMultiTenant::Error`
+  when no tenant matches. Instance-level delegators are provided too.
+
 ## [0.3.1] - 2026-06-04
 
 Corrects two bugs in the 0.3.0 security work, both uncovered by a new

@@ -60,6 +60,20 @@ module RlsMultiTenant
           apply_tenant_context(tenant_id, local: false)
         end
 
+        # Switch tenant context for a block, identifying the tenant by a unique
+        # field (Apartment-style). Defaults to the configured subdomain field.
+        #
+        #   Tenant.switch_by('acme') { ... }              # by subdomain
+        #   Tenant.switch_by('acme', attribute: :slug) { } # by another column
+        def switch_by(value, attribute: RlsMultiTenant.subdomain_field, &block)
+          switch(find_tenant_by!(attribute, value), &block)
+        end
+
+        # Permanent variant of switch_by (until reset). Same caveats as switch!.
+        def switch_by!(value, attribute: RlsMultiTenant.subdomain_field)
+          switch!(find_tenant_by!(attribute, value))
+        end
+
         # Reset tenant context
         def reset!
           connection.execute format(RESET_TENANT_ID_SQL, tenant_session_var)
@@ -80,6 +94,15 @@ module RlsMultiTenant
         end
 
         private
+
+        # Look up a tenant by a unique attribute, raising if none matches.
+        def find_tenant_by!(attribute, value)
+          tenant = RlsMultiTenant.tenant_class.find_by(attribute => value)
+          return tenant if tenant
+
+          raise RlsMultiTenant::Error,
+                "#{RlsMultiTenant.tenant_class_name} with #{attribute}=#{value.inspect} not found"
+        end
 
         # Restore the previous context on the way out of a `switch` block.
         # If the block aborted the transaction (e.g. a policy violation), any
@@ -142,7 +165,13 @@ module RlsMultiTenant
         self.class.switch(tenant_or_id, &block)
       end
 
+      def switch_by(value, attribute: RlsMultiTenant.subdomain_field, &block)
+        self.class.switch_by(value, attribute: attribute, &block)
+      end
+
       delegate :switch!, to: :class
+
+      delegate :switch_by!, to: :class
 
       delegate :reset!, to: :class
     end

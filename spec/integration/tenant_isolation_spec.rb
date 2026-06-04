@@ -74,6 +74,39 @@ RSpec.describe 'RLS tenant isolation', :integration do
     end
   end
 
+  describe 'switching by a unique field (Apartment-style)' do
+    it 'switches by subdomain (the default field)' do
+      Tenant.switch_by('acme') do
+        expect(Tenant.current.id).to eq(tenant_a)
+        expect(Post.count).to eq(2)
+      end
+
+      Tenant.switch_by('globex') do
+        expect(Post.count).to eq(1)
+      end
+    end
+
+    it 'switches by an explicit attribute' do
+      Tenant.switch_by('Globex', attribute: :name) do
+        expect(Tenant.current.id).to eq(tenant_b)
+        expect(Post.count).to eq(1)
+      end
+    end
+
+    it 'raises when no tenant matches' do
+      expect { Tenant.switch_by('does-not-exist') { nil } }
+        .to raise_error(RlsMultiTenant::Error, /not found/)
+    end
+
+    it 'supports the permanent switch_by! until reset' do
+      Tenant.switch_by!('acme')
+      expect(Tenant.current.id).to eq(tenant_a)
+      expect(Post.count).to eq(2)
+    ensure
+      Tenant.reset!
+    end
+  end
+
   describe 'context lifecycle' do
     it 'restores the previous tenant after a nested switch' do
       Tenant.switch(tenant_a) do

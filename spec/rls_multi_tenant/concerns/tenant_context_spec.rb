@@ -52,6 +52,33 @@ RSpec.describe RlsMultiTenant::Concerns::TenantContext do
     end
   end
 
+  describe '.switch_by' do
+    let(:test_class) do
+      Class.new do
+        include RlsMultiTenant::Concerns::TenantContext
+      end
+    end
+
+    let(:tenant_class) { double('Tenant') } # rubocop:disable RSpec/VerifiedDoubles
+
+    before do
+      allow(tenant_class).to receive(:find_by).and_return(nil)
+      allow(RlsMultiTenant).to receive_messages(
+        tenant_class: tenant_class, tenant_class_name: 'Tenant', subdomain_field: :subdomain
+      )
+    end
+
+    it 'looks up by the configured subdomain field by default' do
+      expect { test_class.switch_by('acme') }.to raise_error(RlsMultiTenant::Error, /not found/)
+      expect(tenant_class).to have_received(:find_by).with(subdomain: 'acme')
+    end
+
+    it 'looks up by an explicit attribute' do
+      expect { test_class.switch_by('x', attribute: :slug) }.to raise_error(RlsMultiTenant::Error)
+      expect(tenant_class).to have_received(:find_by).with(slug: 'x')
+    end
+  end
+
   describe '.tenant_session_var' do
     let(:test_class) do
       Class.new do

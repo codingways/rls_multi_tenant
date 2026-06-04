@@ -152,6 +152,29 @@ Tenant.reset! # Reset context
 current_tenant = Tenant.current
 ```
 
+#### Switching by a unique field (Apartment-style)
+
+Instead of a tenant object or id, switch by any unique column. The attribute
+defaults to the configured `subdomain_field`:
+
+```ruby
+# Switch by subdomain (default field) for a block
+Tenant.switch_by("company-a") do
+  User.create!(name: "User from Company A")
+end
+
+# Switch by another unique column
+Tenant.switch_by("acme-inc", attribute: :slug) do
+  # ...
+end
+
+# Permanent variant (until reset!)
+Tenant.switch_by!("company-a")
+Tenant.reset!
+```
+
+`switch_by` raises `RlsMultiTenant::Error` when no tenant matches the value.
+
 ### Automatic Subdomain-Based Tenant Switching
 
 The gem includes middleware that automatically switches tenants based on the request subdomain. This is enabled by default and works seamlessly with your tenant model.

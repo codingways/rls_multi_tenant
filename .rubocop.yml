@@ -37,6 +37,7 @@ Metrics/MethodLength:
   Max: 25
 
 Metrics/ModuleLength:
+  Max: 120
   Exclude:
     - 'spec/**/*'
 
