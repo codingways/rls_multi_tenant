@@ -64,6 +64,7 @@ Rails/ApplicationRecord:
 RSpec/SpecFilePathFormat:
   Exclude:
     - 'spec/integration/**/*'
+    - 'spec/generators/**/*'
 
 Gemspec/DevelopmentDependencies:
   Enabled: false

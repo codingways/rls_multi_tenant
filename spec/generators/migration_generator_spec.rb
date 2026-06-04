@@ -1,77 +1,43 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'rls_multi_tenant/generators/migration/migration_generator'
 
-RSpec.describe 'Migration Generator Tests' do
-  describe 'RLS migration template content' do
-    let(:template_path) do
-      File.join(__dir__, '../../lib/rls_multi_tenant/generators/migration/templates/enable_rls.rb')
-    end
+RSpec.describe RlsMultiTenant::Generators::MigrationGenerator, type: :generator do
+  destination File.expand_path('../tmp/generators', __dir__)
 
-    it 'template file exists' do
-      expect(File.exist?(template_path)).to be true
-    end
+  before { prepare_destination }
 
-    it 'contains RLS enable statement' do
-      template_content = File.read(template_path)
-      expect(template_content).to include('ALTER TABLE <%= table_name %> ENABLE ROW LEVEL SECURITY')
-    end
+  describe 'create_tenant' do
+    before { run_generator(%w[create_tenant]) }
 
-    it 'contains RLS policy creation' do
-      template_content = File.read(template_path)
-      expect(template_content).to include('CREATE POLICY <%= table_name %>_app_user ON <%= table_name %>')
-    end
-
-    it 'contains tenant_id column reference' do
-      template_content = File.read(template_path)
-      expect(template_content).to include('<%= RlsMultiTenant.tenant_id_column %>')
-    end
-
-    it 'contains rollback functionality' do
-      template_content = File.read(template_path)
-      expect(template_content).to include('dir.down do')
-      expect(template_content).to include('DROP POLICY <%= table_name %>_app_user ON <%= table_name %>')
-      expect(template_content).to include('ALTER TABLE <%= table_name %> DISABLE ROW LEVEL SECURITY')
-    end
-
-    it 'uses correct Rails migration version' do
-      template_content = File.read(template_path)
-      expect(template_content).to include('ActiveRecord::Migration[<%= Rails.version.to_f %>]')
+    it 'creates the tenants migration' do
+      assert_migration 'db/migrate/create_tenants.rb' do |migration|
+        assert_match(/create_table :tenants/, migration)
+      end
     end
   end
 
-  describe 'Migration generator class' do
-    it 'generator file exists' do
-      generator_path = File.join(__dir__, '../../lib/rls_multi_tenant/generators/migration/migration_generator.rb')
-      expect(File.exist?(generator_path)).to be true
-    end
+  describe 'enable_uuid' do
+    before { run_generator(%w[enable_uuid]) }
 
-    it 'generator can be loaded' do
-      generator_path = File.join(__dir__, '../../lib/rls_multi_tenant/generators/migration/migration_generator.rb')
-      expect { load generator_path }.not_to raise_error
+    it 'creates the uuid extension migration' do
+      assert_migration 'db/migrate/enable_uuid_extension.rb'
     end
   end
 
-  describe 'Template helper methods' do
-    let(:template_path) do
-      File.join(__dir__, '../../lib/rls_multi_tenant/generators/migration/templates/enable_rls.rb')
+  describe 'enable_rls' do
+    before do
+      # The generator prompts for the table name; supply it without stdin.
+      allow_any_instance_of(described_class).to receive(:table_name).and_return('posts') # rubocop:disable RSpec/AnyInstance
+      run_generator(%w[enable_rls])
     end
 
-    it 'template uses proper ERB syntax' do
-      template_content = File.read(template_path)
-      # Check for proper ERB syntax
-      expect(template_content).to match(/<%= .+ %>/)
-      expect(template_content).to include('end')
-    end
-
-    it 'template has proper class structure' do
-      template_content = File.read(template_path)
-      expect(template_content).to include('class EnableRlsFor<%= table_name.camelize %>')
-    end
-
-    it 'template includes reversible migration' do
-      template_content = File.read(template_path)
-      expect(template_content).to include('reversible do |dir|')
+    it 'creates an enable-RLS migration for the given table' do
+      assert_migration 'db/migrate/enable_rls_for_posts.rb' do |migration|
+        assert_match(/ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY/, migration)
+        assert_match(/CREATE POLICY posts_app_user ON posts/, migration)
+      end
     end
   end
 end
