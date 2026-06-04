@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+# Must be required before active_support/active_record on Rails < 7.1: newer
+# concurrent-ruby no longer pulls in `logger`, and activesupport 6.1 references
+# `Logger` at load time without requiring it (NameError otherwise).
+require 'logger'
 require 'active_record'
 require 'pg'
-require 'logger'
 require 'stringio'
 require 'generator_spec'
 
