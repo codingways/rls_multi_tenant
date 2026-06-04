@@ -5,6 +5,10 @@ module RlsMultiTenant
     module TenantContext
       extend ActiveSupport::Concern
 
+      # PostgreSQL unquoted identifier pattern, used to validate the configured
+      # tenant id column before embedding it in a GUC name.
+      IDENTIFIER_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_]*\z/
+
       SET_TENANT_ID_SQL = 'SET %s = %s'
       SET_LOCAL_TENANT_ID_SQL = 'SET LOCAL %s = %s'
       RESET_TENANT_ID_SQL = 'RESET %s'
@@ -13,7 +17,12 @@ module RlsMultiTenant
       # rubocop:disable Metrics/BlockLength
       class_methods do
         def tenant_session_var
-          "rls.#{RlsMultiTenant.tenant_id_column}"
+          column = RlsMultiTenant.tenant_id_column.to_s
+          unless column.match?(IDENTIFIER_PATTERN)
+            raise ConfigurationError, "Invalid tenant_id_column: #{RlsMultiTenant.tenant_id_column.inspect}"
+          end
+
+          "rls.#{column}"
         end
 
         # Switch tenant context for a block.
@@ -60,7 +69,7 @@ module RlsMultiTenant
         def current
           return nil unless connection.active?
 
-          result = connection.execute("SELECT current_setting('#{tenant_session_var}', true) AS tenant_id")
+          result = connection.execute("SELECT current_setting(#{connection.quote(tenant_session_var)}, true) AS tenant_id")
           tenant_id = result.first&.dig('tenant_id')
 
           return nil if tenant_id.blank?
@@ -87,7 +96,7 @@ module RlsMultiTenant
         def current_tenant_id
           return nil unless connection.active?
 
-          result = connection.execute("SELECT current_setting('#{tenant_session_var}', true) AS tenant_id")
+          result = connection.execute("SELECT current_setting(#{connection.quote(tenant_session_var)}, true) AS tenant_id")
           result.first&.dig('tenant_id')
         rescue ActiveRecord::StatementInvalid, PG::Error
           nil
