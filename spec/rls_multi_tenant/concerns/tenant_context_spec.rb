@@ -56,6 +56,28 @@ RSpec.describe RlsMultiTenant::Concerns::TenantContext do
         test_class.send(:extract_tenant_id, Object.new)
       end.to raise_error(ArgumentError, /Expected Tenant object or tenant_id/)
     end
+
+    it 'returns nil for nil (resolves to a clean reset)' do
+      expect(test_class.send(:extract_tenant_id, nil)).to be_nil
+    end
+  end
+
+  describe '.tenant_session_var' do
+    let(:test_class) do
+      Class.new do
+        include RlsMultiTenant::Concerns::TenantContext
+      end
+    end
+
+    it 'builds the GUC name from the configured column' do
+      allow(RlsMultiTenant).to receive(:tenant_id_column).and_return(:tenant_id)
+      expect(test_class.tenant_session_var).to eq('rls.tenant_id')
+    end
+
+    it 'raises ConfigurationError for an unsafe column name' do
+      allow(RlsMultiTenant).to receive(:tenant_id_column).and_return('id); DROP TABLE x; --')
+      expect { test_class.tenant_session_var }.to raise_error(RlsMultiTenant::ConfigurationError)
+    end
   end
 
   describe 'tenant validation' do
