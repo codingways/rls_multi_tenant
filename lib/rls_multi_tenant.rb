@@ -28,7 +28,10 @@ module RlsMultiTenant
     end
 
     def tenant_class
-      @tenant_class ||= tenant_class_name.constantize
+      # Resolve on every call rather than memoizing: a memoized class object
+      # goes stale across code reloads in development and after the tenant
+      # class name is reconfigured, which can break associations.
+      tenant_class_name.constantize
     end
 
     def tenant_id_column
