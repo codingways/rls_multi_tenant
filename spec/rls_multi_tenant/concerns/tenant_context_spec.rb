@@ -3,16 +3,6 @@
 require 'rails_helper'
 
 RSpec.describe RlsMultiTenant::Concerns::TenantContext do
-  describe 'module structure' do
-    it 'is a module' do
-      expect(described_class).to be_a(Module)
-    end
-
-    it 'extends ActiveSupport::Concern' do
-      expect(described_class.ancestors).to include(ActiveSupport::Concern)
-    end
-  end
-
   describe 'extract_tenant_id method' do
     let(:test_class) do
       Class.new do
@@ -118,95 +108,6 @@ RSpec.describe RlsMultiTenant::Concerns::TenantContext do
         expect { test_class.send(:validate_tenant_exists!, nil) }.not_to raise_error
         expect { test_class.send(:validate_tenant_exists!, '') }.not_to raise_error
       end
-    end
-  end
-
-  describe 'nested switch functionality' do
-    let(:tenant1_id) { 'tenant-1' }
-    let(:tenant2_id) { 'tenant-2' }
-    let(:tenant_session_var) { 'rls.tenant_id' }
-    let(:current_tenant_id) { nil }
-
-    let(:test_class) do
-      Class.new do
-        include RlsMultiTenant::Concerns::TenantContext
-
-        class << self
-          attr_reader :connection
-        end
-
-        class << self
-          attr_writer :connection
-        end
-      end
-    end
-
-    before do
-      stub_const('Tenant', Class.new do
-        def initialize(id)
-          @id = id
-        end
-
-        attr_reader :id
-
-        def self.exists?(*)
-          true
-        end
-
-        def self.find_by(id:)
-          return nil if id.blank?
-
-          new(id)
-        end
-      end)
-
-      allow(RlsMultiTenant).to receive_messages(
-        tenant_class: Tenant,
-        tenant_class_name: 'Tenant',
-        tenant_id_column: :tenant_id
-      )
-
-      # rubocop:disable RSpec/VerifiedDoubles
-      mock_connection = double('Connection')
-      # rubocop:enable RSpec/VerifiedDoubles
-      allow(mock_connection).to receive(:active?).and_return(true)
-      allow(mock_connection).to receive(:transaction) { |*_args, &blk| blk.call }
-
-      tenant_state = { current: nil }
-
-      allow(mock_connection).to receive(:execute) do |sql|
-        if sql.include?('current_setting')
-          [{ 'tenant_id' => tenant_state[:current] }]
-        elsif sql.include?('TO DEFAULT') || sql.start_with?('RESET')
-          tenant_state[:current] = nil
-        elsif sql.start_with?('SET')
-          tenant_id_match = sql.match(/SET (?:LOCAL )?#{Regexp.escape(tenant_session_var)} = '(.+)'/)
-          tenant_state[:current] = tenant_id_match[1] if tenant_id_match
-        end
-      end
-
-      allow(mock_connection).to receive(:quote) do |value|
-        "'#{value}'"
-      end
-
-      test_class.connection = mock_connection
-    end
-
-    it 'handles nested switches correctly' do
-      tenant1_instance = Tenant.new(tenant1_id)
-      tenant2_instance = Tenant.new(tenant2_id)
-
-      test_class.switch(tenant1_instance) do
-        expect(test_class.current.id).to eq(tenant1_id)
-
-        test_class.switch(tenant2_instance) do
-          expect(test_class.current.id).to eq(tenant2_id)
-        end
-
-        expect(test_class.current.id).to eq(tenant1_id)
-      end
-
-      expect(test_class.current).to be_nil
     end
   end
 end

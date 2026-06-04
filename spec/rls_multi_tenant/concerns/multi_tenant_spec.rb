@@ -3,16 +3,6 @@
 require 'rails_helper'
 
 RSpec.describe RlsMultiTenant::Concerns::MultiTenant do
-  describe 'module structure' do
-    it 'is a module' do
-      expect(described_class).to be_a(Module)
-    end
-
-    it 'extends ActiveSupport::Concern' do
-      expect(described_class.ancestors).to include(ActiveSupport::Concern)
-    end
-  end
-
   describe '#set_tenant_id' do
     let(:mock_active_record) do
       Class.new do
