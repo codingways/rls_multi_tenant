@@ -1,81 +1,45 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'active_record'
+require 'pg'
+require 'logger'
+require 'stringio'
 require 'generator_spec'
 
-# Mock Rails for testing
+# Minimal Rails shim. The gem only touches Rails.logger / Rails.version and
+# subclasses Rails::Railtie; we avoid booting a full Rails app so the unit
+# suite stays fast and the integration suite talks to a real database through
+# plain ActiveRecord.
 module Rails
-  def self.root
-    Pathname.new(File.expand_path('..', __dir__))
+  class Railtie
+    def self.initializer(_name, **_options); end
   end
+
+  class Application; end
 
   def self.logger
     @logger ||= Logger.new(StringIO.new)
+  end
+
+  def self.version
+    ActiveRecord::VERSION::STRING
   end
 
   def self.env
     'test'
   end
 
+  def self.root
+    Pathname.new(File.expand_path('..', __dir__))
+  end
+
   def self.application
-    @application ||= instance_double(Rails::Application)
-  end
-
-  class Railtie
-    def self.initializer(name, **options, &block)
-      # Mock initializer registration
-    end
+    @application ||= Application.new
   end
 end
 
-# Mock ActiveRecord
-module ActiveRecord
-  class Base
-    def self.connection
-      @connection ||= instance_double(ActiveRecord::ConnectionAdapters::AbstractAdapter)
-    end
-
-    def self.connection_db_config
-      @connection_db_config ||= instance_double(ActiveRecord::DatabaseConfigurations::DatabaseConfig,
-                                                configuration_hash: { username: 'test_user' })
-    end
-
-    def self.execute(sql)
-      connection.execute(sql)
-    end
-  end
-
-  class Migration
-    def self.[](_version)
-      self
-    end
-  end
-
-  class StatementInvalid < StandardError; end
-end
-
-# Mock ActionDispatch
-module ActionDispatch
-  class Request
-    def initialize(env)
-      @env = env
-    end
-
-    def method
-      @env['REQUEST_METHOD'] || 'GET'
-    end
-
-    def path
-      @env['PATH_INFO'] || '/'
-    end
-
-    def host
-      @env['HTTP_HOST'] || 'example.com'
-    end
-  end
-end
-
-# Mock Rack
+# Small Rack app stand-in used when instantiating the middleware in unit specs.
 module Rack
   class App
     def call(_env)
@@ -84,28 +48,15 @@ module Rack
   end
 end
 
-# Mock Tenant class
-class Tenant
-  attr_reader :id
-
-  def initialize(id)
-    @id = id
-  end
-end
-
-# Mock PG
-module PG
-  class Error < StandardError; end
-end
-
-# Load the gem
+# Load the gem under test.
 require_relative '../lib/rls_multi_tenant'
 
+# Load support files (shared helpers, DB harness, etc.).
+Dir[File.join(__dir__, 'support', '**', '*.rb')].each { |f| require f }
+
 RSpec.configure do |config|
-  # Include generator spec helpers
   config.include GeneratorSpec::TestCase, type: :generator
 
-  # Mock Rails components
   config.before do
     allow(Rails.logger).to receive(:info)
     allow(Rails.logger).to receive(:warn)

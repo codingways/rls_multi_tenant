@@ -13,7 +13,7 @@ module RlsMultiTenant
           username = role && role['username']
 
           ensure_not_superuser!(role, username)
-          ensure_no_bypassrls!(username)
+          ensure_no_bypassrls!(role, username)
 
           Rails.logger&.info "✅ RLS Multi-tenant security check passed: Using user '#{username}' " \
                              'without SUPERUSER or BYPASSRLS privileges'
@@ -25,8 +25,10 @@ module RlsMultiTenant
 
       private
 
-      # Inspect the actual connected role (current_user), not the configured
-      # username, so the check reflects what PostgreSQL really enforces and
+      # Inspect the actual connected role (current_user). Only this role's own
+      # attributes determine whether RLS is enforced: PostgreSQL does NOT
+      # inherit SUPERUSER or BYPASSRLS through role membership, so checking the
+      # current role is both correct and sufficient. Using current_user also
       # avoids interpolating a config value into SQL.
       def current_role
         ActiveRecord::Base.connection.execute(<<~SQL.squish).first
@@ -45,24 +47,12 @@ module RlsMultiTenant
                              'non-privileged, non-superuser role for RLS Multi-tenant.'
       end
 
-      # BYPASSRLS can also be inherited through role membership, so check the
-      # effective privilege across every role the user is a member of.
-      def ensure_no_bypassrls!(username)
-        return unless bypassrls_effective?
+      def ensure_no_bypassrls!(role, username)
+        return unless truthy?(role && role['rolbypassrls'])
 
-        raise SecurityError, "Database user '#{username}' has BYPASSRLS privilege " \
-                             '(directly or through an inherited role). ' \
+        raise SecurityError, "Database user '#{username}' has BYPASSRLS privilege. " \
                              'In order to use RLS Multi-tenant, you must use a non-privileged user ' \
                              'without BYPASSRLS privilege.'
-      end
-
-      def bypassrls_effective?
-        result = ActiveRecord::Base.connection.execute(<<~SQL.squish).first
-          SELECT bool_or(rolbypassrls) AS bypass
-          FROM pg_roles WHERE pg_has_role(current_user, oid, 'USAGE')
-        SQL
-
-        truthy?(result && result['bypass'])
       end
 
       # PostgreSQL boolean columns may come back as true/false or 't'/'f'
