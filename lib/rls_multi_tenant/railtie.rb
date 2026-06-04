@@ -10,15 +10,6 @@ module RlsMultiTenant
       require 'rls_multi_tenant/generators/model/model_generator'
     end
 
-    initializer 'rls_multi_tenant.configure' do |_app|
-      # Configure the gem
-      RlsMultiTenant.configure do |config|
-        config.tenant_class_name = 'Tenant'
-        config.tenant_id_column = :tenant_id
-        config.enable_security_validation = true
-      end
-    end
-
     initializer 'rls_multi_tenant.security_validation', after: :load_config_initializers do |app|
       if RlsMultiTenant.enable_security_validation
         app.config.after_initialize do
